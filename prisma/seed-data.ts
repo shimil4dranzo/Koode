@@ -825,18 +825,20 @@ export type SeedAnchorOrg = {
 };
 
 /**
- * Launch anchor only. KVVES Edakkara is the local merchants' and traders'
- * association that vouches for members, so it is seeded at the Edakkara
- * panchayat level rather than at a ward — membership is panchayat-wide.
+ * Launch anchor only: the local merchants' and traders' association that
+ * vouches for members. Seeded at the Edakkara panchayat level rather than at a
+ * ward, because membership is panchayat-wide.
  *
- * VERIFY: confirm the exact registered English name and the Malayalam
- * rendering of the initialism with the association's office-bearers before
- * this appears on a verified badge.
+ * PLACEHOLDER NAME. This is deliberately generic: the association's real
+ * registered name must be entered before launch, because it is displayed to
+ * members and sits behind a verified badge — a badge that names the wrong body
+ * is worse than one that names none. Set the exact registered English name and
+ * its Malayalam rendering with the association's office-bearers, then re-seed.
  */
 export const SEED_ANCHOR_ORGS: SeedAnchorOrg[] = [
   {
-    nameEn: 'KVVES Edakkara',
-    nameMl: 'കെ.വി.വി.ഇ.എസ്. എടക്കര',
+    nameEn: "Local Traders' Association",
+    nameMl: 'നാട്ടിലെ വ്യാപാരി സംഘടന',
     type: 'merchant_assoc',
     localityKey: 'kl-mpm-nilambur-edakkara',
   },

@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
 import { LogoMark } from '@/components/logo';
-import { TownscapeArt, VouchNetworkArt } from '@/components/art';
+import { TownscapeArt } from '@/components/art';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { VouchGraph3d } from '@/components/three/vouch-graph-3d';
 import type { StyleWithVars } from '@/lib/css';
 import {
   IconArrowRight,
@@ -81,87 +82,140 @@ export default async function HomePage({ params }: PageProps) {
       <ScrollReveal />
       <PageGlow />
 
-      {/* ---- Hero: the claim on the left, the proof on the right ---------- */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-4 pt-10 lg:pt-14">
-        <div className="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
-          <div data-reveal="lift">
-            <h1 className="max-w-xl text-3xl font-semibold sm:text-4xl">
-              {t('heroTitle')}
-            </h1>
-            <p className="mt-4 max-w-xl text-lg text-ink-700">{t('heroBody')}</p>
+      {/* ---- Hero: the launch banner ------------------------------------
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/openings"
-                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-lg font-medium text-white hover:bg-brand-700"
-              >
-                {t('findWork')}
-                <IconArrowRight className="size-5" />
-              </Link>
-              <Link
-                href="/openings/new"
-                className="inline-flex min-h-14 items-center justify-center rounded-lg border border-ink-300 bg-paper-raised px-6 text-lg font-medium hover:bg-ink-100"
-              >
-                {t('postWork')}
-              </Link>
-            </div>
+        Full-bleed and dark, and the only dark band in the app. Two reasons,
+        both practical rather than fashionable: the WebGL graph behind the
+        headline is drawn with additive blending, which glows on near-black
+        and disappears on white; and a single dark band gives the launch a
+        moment of stagecraft without committing the pages people actually
+        work in — read outdoors, on cheap screens — to a dark theme.
 
-            <dl className="mt-8 grid max-w-md grid-cols-3 gap-4 border-t border-ink-200 pt-5">
-              {stats.map((stat) => (
-                <div key={stat.label}>
-                  <dd className="text-2xl font-semibold tabular-nums">{stat.value}</dd>
-                  <dt className="mt-0.5 text-sm text-ink-700">{stat.label}</dt>
-                </div>
-              ))}
-            </dl>
-          </div>
+        The graph is not decoration. Every point is a person on the platform
+        and every line is a real recommendation, counted from the database, so
+        the banner is a portrait of the thing the product accumulates. On a
+        device that cannot afford WebGL the same idea arrives as a self-drawing
+        SVG, and the text above it is unchanged either way.
+      */}
+      <section className="relative isolate overflow-hidden bg-night-900 text-white">
+        {/* The backdrop. aria-hidden inside; it carries no information that
+            is not also written in the copy. */}
+        <div className="pointer-events-none absolute inset-0">
+          <VouchGraph3d
+            variant="hero"
+            peopleCount={counts.activePeople}
+            vouchCount={counts.recommendations}
+            className="size-full"
+            fallbackClassName="absolute inset-0 m-auto h-auto w-full max-w-3xl opacity-40 text-brand-500"
+          />
+        </div>
 
-          {/*
-            The proof: the latest real vouches, verbatim. This panel IS the
-            product — a competitor can screenshot the layout, not the graph.
-            Renders nothing during cold start rather than showing samples.
-          */}
-          {vouches.length > 0 ? (
-            <div className="flex flex-col gap-4 lg:pt-2" data-reveal="swing">
-              <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-ink-500">
-                <IconVouch className="size-4.5 text-brand-600" />
-                {t('vouchPanelTitle')}
+        {/*
+          Scrims, not opacity on the canvas: the graph stays bright where
+          there is no text and is pushed down where there is. Without this the
+          headline sits on a moving field and the contrast changes frame to
+          frame, which is how animated heroes end up unreadable.
+        */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-night-900 via-night-900/70 to-night-900/20 lg:via-night-900/55 lg:to-transparent"
+        />
+        {/* Hands off to the light page below instead of stopping at an edge. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-paper"
+        />
+
+        <div className="relative mx-auto w-full max-w-6xl px-4 pb-12 pt-10 lg:pb-28 lg:pt-20">
+          <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_1fr]">
+            <div data-reveal="lift">
+              <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-night-300">
+                <LogoMark className="size-5" />
+                {t('heroEyebrow')}
               </p>
 
-              {vouches.map((vouch) => (
-                <Card key={vouch.subjectPublicId + vouch.createdAt} className="shadow-sm">
-                  <blockquote className="line-clamp-3 border-s-4 border-brand-500 ps-3 text-base">
-                    {vouch.note}
-                  </blockquote>
+              <h1 className="mt-5 max-w-xl text-4xl font-semibold sm:text-5xl">
+                {t('heroTitle')}
+              </h1>
+              <p className="mt-5 max-w-xl text-lg text-night-300">{t('heroBody')}</p>
 
-                  <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-700">
-                    <span className="font-medium text-ink-900">{vouch.referrerName}</span>
-                    {vouch.referrerIsVerifiedMember ? (
-                      <Badge tone="verified" glyph="✓">
-                        {tAnchor('verified')}
-                      </Badge>
-                    ) : null}
-                    <span aria-hidden="true">→</span>
-                    <Link
-                      href={`/people/${vouch.subjectPublicId}`}
-                      className="underline underline-offset-2 hover:text-brand-700"
-                    >
-                      {vouch.subjectName}
-                    </Link>
-                    {vouch.categoryLabel ? (
-                      <span className="text-ink-500">· {vouch.categoryLabel}</span>
-                    ) : null}
-                  </p>
-                </Card>
-              ))}
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/openings"
+                  className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-lg font-medium text-night-900 hover:bg-brand-100"
+                >
+                  {t('findWork')}
+                  <IconArrowRight className="size-5" />
+                </Link>
+                <Link
+                  href="/openings/new"
+                  className="inline-flex min-h-14 items-center justify-center rounded-lg border border-white/30 px-6 text-lg font-medium text-white hover:bg-white/10"
+                >
+                  {t('postWork')}
+                </Link>
+              </div>
+
+              <dl className="mt-8 grid max-w-md grid-cols-3 gap-4 border-t border-white/20 pt-5 lg:mt-10">
+                {stats.map((stat) => (
+                  <div key={stat.label}>
+                    <dd className="text-3xl font-semibold tabular-nums">{stat.value}</dd>
+                    <dt className="mt-0.5 text-sm text-night-300">{stat.label}</dt>
+                  </div>
+                ))}
+              </dl>
+
+              <p className="mt-6 max-w-sm text-sm text-night-300 lg:mt-8">
+                {t('heroGraphCaption')}
+              </p>
             </div>
-          ) : (
-            // Cold start: the vouch panel has nothing real to show, so the
-            // idea gets drawn instead of faked with sample quotes.
-            <div className="hidden lg:flex lg:items-center lg:justify-center">
-              <VouchNetworkArt animated className="w-full max-w-xs text-brand-600" />
-            </div>
-          )}
+
+            {/*
+              The proof: the latest real vouches, verbatim. This panel IS the
+              product — a competitor can screenshot the layout, not the graph.
+              Renders nothing during cold start rather than showing samples.
+            */}
+            {vouches.length > 0 ? (
+              <div className="flex flex-col gap-4 lg:pt-10" data-reveal="swing">
+                <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-night-300">
+                  <IconVouch className="size-4.5 text-brand-500" />
+                  {t('vouchPanelTitle')}
+                </p>
+
+                {vouches.map((vouch) => (
+                  <div
+                    key={vouch.subjectPublicId + vouch.createdAt}
+                    // Translucent rather than a solid card: the graph stays
+                    // faintly visible through the panel, which is what makes
+                    // the quotes read as sitting inside the network.
+                    className="rounded-card border border-white/20 bg-night-800/70 p-4 backdrop-blur-sm sm:p-5"
+                  >
+                    <blockquote className="line-clamp-3 border-s-4 border-brand-500 ps-3 text-base text-white">
+                      {vouch.note}
+                    </blockquote>
+
+                    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-night-300">
+                      <span className="font-medium text-white">{vouch.referrerName}</span>
+                      {vouch.referrerIsVerifiedMember ? (
+                        <Badge tone="verified" glyph="✓">
+                          {tAnchor('verified')}
+                        </Badge>
+                      ) : null}
+                      <span aria-hidden="true">→</span>
+                      <Link
+                        href={`/people/${vouch.subjectPublicId}`}
+                        className="text-white underline underline-offset-2 hover:text-brand-100"
+                      >
+                        {vouch.subjectName}
+                      </Link>
+                      {vouch.categoryLabel ? (
+                        <span>· {vouch.categoryLabel}</span>
+                      ) : null}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -291,9 +345,17 @@ export default async function HomePage({ params }: PageProps) {
             ))}
           </ol>
 
-          <VouchNetworkArt
-            animated
-            className="mx-auto w-56 shrink-0 text-brand-600 lg:w-64"
+          {/*
+            The graph, fed by the real numbers: as many nodes as there are
+            people and as many edges as there are recommendations. On a
+            capable device this is WebGL and it turns as you scroll; on
+            anything else the same drawing renders as SVG. Either way the
+            section is complete.
+          */}
+          <VouchGraph3d
+            peopleCount={counts.activePeople}
+            vouchCount={counts.recommendations}
+            className="mx-auto w-64 shrink-0 text-brand-600 lg:w-80"
           />
         </div>
       </section>

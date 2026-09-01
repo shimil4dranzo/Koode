@@ -2,7 +2,7 @@
   "app": {
     "name": "Koode",
     "tagline": "Local work, on the strength of a local word",
-    "byline": "A KVVES Edakkara initiative",
+    "byline": "Local work, on the strength of a local word",
     "privacyLink": "Privacy notice"
   },
   "common": {
@@ -64,10 +64,13 @@
     "tiersTitle": "Every kind of work",
     "tiersBody": "A loading worker and a chartered accountant get the same profile, the same recommendations, the same respect.",
     "trustTitle": "Backed by people who can be asked",
-    "trustBody": "Every recommendation carries a real name, and members verified by KVVES Edakkara carry a badge their neighbours can check. Nothing here is an anonymous star rating.",
+    "trustBody": "Every recommendation carries a real name, and verified members carry a badge their neighbours can check. Nothing here is an anonymous star rating.",
     "ctaTitle": "Start in under a minute",
     "ctaBody": "Looking for work? Just browse — no account needed. Hiring? Sign up with an e-mail or Google.",
-    "ctaAction": "Get started"
+    "ctaAction": "Get started",
+    "heroEyebrow": "Local work, on the strength of a local word",
+    "heroScrollHint": "Scroll to see how it works",
+    "heroGraphCaption": "A picture of the network Koode builds: people, and the recommendations that connect them."
   },
   "auth": {
     "signInTitle": "Sign in to Koode",
@@ -246,7 +249,7 @@
   },
   "claim": {
     "title": "Someone has recommended you",
-    "intro": "{referrer} has put your name forward on Koode, a local work platform run by KVVES Edakkara.",
+    "intro": "{referrer} has put your name forward on Koode, a local work platform.",
     "whatTheySaid": "What they wrote about you",
     "relationship": "They say they know you as: {relationship}",
     "yourDetails": "They entered your name as {name} and your number as {phone}.",
@@ -297,7 +300,7 @@
   "anchor": {
     "title": "Membership",
     "requestTitle": "Confirm your membership",
-    "requestSubtitle": "If you belong to KVVES Edakkara, an office-bearer can confirm it. Verified members get a badge and can write recommendations.",
+    "requestSubtitle": "If you are a member of the association, an office-bearer can confirm it. Verified members get a badge and can write recommendations.",
     "orgLabel": "Association",
     "refLabel": "Membership number",
     "request": "Request verification",

@@ -280,8 +280,8 @@ export async function createRecommendation(
       // Names the referrer, because the person has a right to know who put
       // their details in, and offers a way out in the message itself.
       body:
-        `${referrer.displayName} has recommended you on Koode, a local work platform ` +
-        `by KVVES Edakkara. Your details are not shown to anyone until you agree. ` +
+        `${referrer.displayName} has recommended you on Koode, a local work platform. ` +
+        `Your details are not shown to anyone until you agree. ` +
         `Accept or remove them here: ${link}`,
     });
   }

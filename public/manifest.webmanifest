@@ -1,7 +1,7 @@
 {
   "name": "Koode — കൂടെ",
   "short_name": "Koode",
-  "description": "Local work in Edakkara, on the strength of a local word. A KVVES Edakkara initiative.",
+  "description": "Local work in Edakkara, on the strength of a local word.",
   "start_url": "/ml",
   "scope": "/",
   "display": "standalone",

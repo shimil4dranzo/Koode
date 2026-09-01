@@ -40,8 +40,25 @@
   /* Kerala green — the association's colour, and legible in sunlight. */
   --color-brand-700: oklch(0.42 0.11 155);
   --color-brand-600: oklch(0.50 0.13 155);
-  --color-brand-500: oklch(0.58 0.14 155);
+  /* 0.60, not 0.58: at 0.58 the hero's primary button — night-900 text on this
+     green — measured 4.47:1, just under the 4.5 floor. Two hundredths of
+     lightness is invisible next to the old value and puts it safely over. */
+  --color-brand-500: oklch(0.60 0.14 155);
   --color-brand-100: oklch(0.94 0.03 155);
+
+  /* The hero band, and only the hero band.
+
+     The rest of the app is deliberately light — it is read outdoors on cheap
+     screens. But the launch banner carries a WebGL graph drawn with additive
+     blending, and additive blending on a white ground washes to white: the
+     network would be invisible on the exact screen it exists to impress. On a
+     near-black green the same points glow. So this is one dark band at the
+     top, not a dark theme. */
+  --color-night-900: oklch(0.20 0.035 165);
+  --color-night-800: oklch(0.26 0.04 165);
+  --color-night-700: oklch(0.34 0.042 165);
+  /* Secondary text on the band. Measured against night-900, not guessed. */
+  --color-night-300: oklch(0.86 0.03 165);
 
   /* Trust marker for verified members. Deliberately distinct from brand green
      so a badge never reads as decoration. */
