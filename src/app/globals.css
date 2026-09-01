@@ -138,6 +138,98 @@
   }
 }
 
+/**
+ * Scroll-driven reveals.
+ *
+ * The animation is CSS-only and opt-in per element via `data-reveal`. A tiny
+ * IntersectionObserver flips `data-reveal="in"` once; it never runs on scroll,
+ * so there is no scroll handler and nothing to throttle.
+ *
+ * The default state is VISIBLE. Only a browser that has both JS and animation
+ * support gets the hidden starting state, applied by the observer script
+ * setting `data-reveal-ready` on <html>. So with JS off, on an old browser, or
+ * if the script fails, the page is simply the finished page — never a screen
+ * of invisible content, which is the usual way scroll animation breaks.
+ *
+ * Transforms and opacity only: both are composited on the GPU, so this costs
+ * a low-end Android nothing per frame, unlike animating layout properties.
+ */
+@layer utilities {
+  [data-reveal] {
+    /* Perspective lives on the element so each reveal has its own vanishing
+       point; a shared parent perspective makes items at the edges skew. */
+    transform-style: preserve-3d;
+  }
+
+  [data-reveal-ready] [data-reveal] {
+    opacity: 0;
+    transition:
+      opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: transform, opacity;
+  }
+
+  /* Rises and rotates back into place, as if lying flat and standing up. */
+  [data-reveal-ready] [data-reveal='lift'] {
+    transform: perspective(900px) translate3d(0, 28px, -60px) rotateX(9deg);
+  }
+
+  /* Arrives from the side with a slight turn — used for the hero columns. */
+  [data-reveal-ready] [data-reveal='swing'] {
+    transform: perspective(1100px) translate3d(0, 20px, -80px) rotateY(-7deg);
+  }
+
+  /* A card deck settling: smaller travel, so a grid does not look seasick. */
+  [data-reveal-ready] [data-reveal='card'] {
+    transform: perspective(800px) translate3d(0, 22px, -40px) rotateX(6deg);
+  }
+
+  [data-reveal-ready] [data-reveal][data-reveal-state='in'] {
+    opacity: 1;
+    transform: none;
+    /* Released once the animation is done so the compositor can reclaim the
+       layer — leaving will-change on every card is its own performance bug. */
+    will-change: auto;
+  }
+
+  /**
+   * The signature moment: the recommendation graph draws itself.
+   *
+   * Pure stroke-dashoffset on the SVG paths, so the line genuinely appears to
+   * be drawn rather than fading in. The dash length is set per-path by the
+   * component from its own measured length.
+   */
+  [data-reveal-ready] [data-draw] {
+    stroke-dasharray: var(--draw-length);
+    stroke-dashoffset: var(--draw-length);
+    transition: stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--draw-delay, 0ms);
+  }
+
+  [data-reveal-ready] [data-draw][data-reveal-state='in'] {
+    stroke-dashoffset: 0;
+  }
+
+  /**
+   * Motion is a preference, not a default.
+   *
+   * The base reduced-motion block already neutralises durations, but these
+   * elements start transformed and invisible — so they must be reset to their
+   * finished state explicitly, or somebody who asked for less motion would get
+   * a blank page instead of a still one.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal-ready] [data-reveal],
+    [data-reveal-ready] [data-draw] {
+      opacity: 1 !important;
+      transform: none !important;
+      stroke-dashoffset: 0 !important;
+      transition: none !important;
+    }
+  }
+}
+
 @layer utilities {
   /* Visible only to assistive technology. */
   .sr-only-focusable:not(:focus):not(:focus-within) {

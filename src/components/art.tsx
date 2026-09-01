@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import type { StyleWithVars } from '@/lib/css';
 
 /**
  * Illustrations.
@@ -15,6 +16,22 @@ import { cn } from '@/lib/cn';
  * crisp on a cheap screen, and needs no image pipeline. All decorative, so
  * every root is aria-hidden.
  */
+
+/** Props that mark an element as a scroll reveal, with an optional delay. */
+function reveal(kind: 'lift' | 'swing' | 'card', delayMs = 0) {
+  return {
+    'data-reveal': kind,
+    ...(delayMs > 0 ? { style: { '--reveal-delay': `${delayMs}ms` } as StyleWithVars } : {}),
+  };
+}
+
+/** Props that make a stroked path draw itself in. */
+function drawIn(delayMs = 0) {
+  return {
+    'data-draw': '',
+    style: { '--draw-delay': `${delayMs}ms` } as StyleWithVars,
+  };
+}
 
 /**
  * A small-town street: shopfronts under awnings, coconut palms, hills behind.
@@ -102,7 +119,27 @@ export function TownscapeArt({ className }: { className?: string }) {
  * The check-marked link is the whole idea — a recommendation is an edge with
  * a name on it, not a score.
  */
-export function VouchNetworkArt({ className }: { className?: string }) {
+export function VouchNetworkArt({
+  className,
+  animated = false,
+}: {
+  className?: string;
+  /**
+   * Draw the graph in as it scrolls into view rather than showing it whole.
+   *
+   * The edges and the tick are stroked paths, so `stroke-dashoffset` makes a
+   * line genuinely appear to be drawn — which is exactly what the product
+   * does: a connection between two people, then a mark saying it was vouched
+   * for. Off by default so the same drawing can sit still elsewhere.
+   */
+  animated?: boolean;
+}) {
+  // Ordered so the eye follows the story: the two people, then the link
+  // between them, then the vouch that makes it count.
+  const draw = (delayMs: number) => (animated ? drawIn(delayMs) : {});
+  const rise = (delayMs: number, kind: 'lift' | 'card' = 'card') =>
+    animated ? reveal(kind, delayMs) : {};
+
   return (
     <svg
       viewBox="0 0 240 160"
@@ -114,29 +151,34 @@ export function VouchNetworkArt({ className }: { className?: string }) {
       aria-hidden="true"
       className={cn('h-auto', className)}
     >
-      {/* edges, drawn first so the nodes sit on top */}
-      <path d="M70 62 118 96" opacity={0.55} />
-      <path d="M170 62 122 96" opacity={0.55} />
-
       {/* referrer, upper left */}
-      <g>
+      <g {...rise(0)}>
         <circle cx="60" cy="46" r="15" />
         <circle cx="60" cy="41" r="6" />
         <path d="M49 55a12 12 0 0 1 22 0" />
       </g>
 
       {/* employer, upper right */}
-      <g>
+      <g {...rise(140)}>
         <circle cx="180" cy="46" r="15" />
         <circle cx="180" cy="41" r="6" />
         <path d="M169 55a12 12 0 0 1 22 0" />
       </g>
 
-      {/* the vouch itself */}
-      <g>
-        <rect x="86" y="96" width="68" height="44" rx="10" />
-        <path d="M104 118l8 8 16-16" />
-      </g>
+      {/* the edges: the connection being made */}
+      <path d="M70 62 118 96" opacity={0.55} {...draw(320)} />
+      <path d="M170 62 122 96" opacity={0.55} {...draw(440)} />
+
+      {/* the vouch itself, and last of all the tick */}
+      <rect
+        x="86"
+        y="96"
+        width="68"
+        height="44"
+        rx="10"
+        {...rise(560, 'lift')}
+      />
+      <path d="M104 118l8 8 16-16" {...draw(760)} />
     </svg>
   );
 }

@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
 import { LogoMark } from '@/components/logo';
 import { TownscapeArt, VouchNetworkArt } from '@/components/art';
+import { ScrollReveal } from '@/components/scroll-reveal';
+import type { StyleWithVars } from '@/lib/css';
 import {
   IconArrowRight,
   IconBriefcase,
@@ -74,12 +76,15 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <div className="relative">
+      {/* Turns the reveals on. Until it runs, CSS leaves everything visible,
+          so no-JS and old browsers get the finished page, not a blank one. */}
+      <ScrollReveal />
       <PageGlow />
 
       {/* ---- Hero: the claim on the left, the proof on the right ---------- */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-4 pt-10 lg:pt-14">
         <div className="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
-          <div>
+          <div data-reveal="lift">
             <h1 className="max-w-xl text-3xl font-semibold sm:text-4xl">
               {t('heroTitle')}
             </h1>
@@ -117,7 +122,7 @@ export default async function HomePage({ params }: PageProps) {
             Renders nothing during cold start rather than showing samples.
           */}
           {vouches.length > 0 ? (
-            <div className="flex flex-col gap-4 lg:pt-2">
+            <div className="flex flex-col gap-4 lg:pt-2" data-reveal="swing">
               <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-ink-500">
                 <IconVouch className="size-4.5 text-brand-600" />
                 {t('vouchPanelTitle')}
@@ -154,7 +159,7 @@ export default async function HomePage({ params }: PageProps) {
             // Cold start: the vouch panel has nothing real to show, so the
             // idea gets drawn instead of faked with sample quotes.
             <div className="hidden lg:flex lg:items-center lg:justify-center">
-              <VouchNetworkArt className="w-full max-w-xs text-brand-600" />
+              <VouchNetworkArt animated className="w-full max-w-xs text-brand-600" />
             </div>
           )}
         </div>
@@ -175,10 +180,15 @@ export default async function HomePage({ params }: PageProps) {
           </div>
 
           <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {latest.items.map((item) => (
+            {latest.items.map((item, index) => (
               <Card
                 key={item.publicId}
                 as="li"
+                data-reveal="card"
+                // Staggered by position so the grid settles as a wave rather
+                // than snapping in as one block. Capped so a long list never
+                // leaves the last card waiting on a visibly dead beat.
+                style={{ '--reveal-delay': `${Math.min(index, 5) * 70}ms` } as StyleWithVars}
                 className="h-full transition-colors hover:border-brand-600"
               >
                 <Link href={`/openings/${item.publicId}`} className="flex h-full flex-col gap-2">
@@ -208,16 +218,22 @@ export default async function HomePage({ params }: PageProps) {
       {/* ---- The four tiers: every kind of work, same dignity -------------- */}
       <section className="border-y border-ink-200 bg-paper-raised">
         <div className="mx-auto w-full max-w-6xl px-4 py-10">
-          <h2 className="text-xl font-semibold sm:text-2xl">{t('tiersTitle')}</h2>
-          <p className="mt-1 max-w-2xl text-ink-700">{t('tiersBody')}</p>
+          <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
+            {t('tiersTitle')}
+          </h2>
+          <p className="mt-1 max-w-2xl text-ink-700" data-reveal="lift">
+            {t('tiersBody')}
+          </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {tiers.map((tier) => {
+            {tiers.map((tier, index) => {
               const TierIcon = TIER_ICONS[tier.slug] ?? IconBriefcase;
               return (
                 <Link
                   key={tier.publicId}
                   href={`/openings?category=${tier.publicId}`}
+                  data-reveal="card"
+                  style={{ '--reveal-delay': `${index * 80}ms` } as StyleWithVars}
                   className="group flex h-full flex-col gap-2 rounded-card border border-ink-200 p-4 transition-colors hover:border-brand-600"
                 >
                   <span className="inline-flex size-10 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
@@ -241,28 +257,50 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* ---- How it works: three columns instead of a tower ---------------- */}
       <section className="mx-auto w-full max-w-6xl px-4 py-10">
-        <h2 className="text-xl font-semibold sm:text-2xl">{t('howItWorksTitle')}</h2>
-        <ol className="mt-4 grid gap-3 lg:grid-cols-3">
-          {steps.map((step, index) => (
-            <Card key={step.title} as="li" className="flex h-full gap-4">
+        <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
+          {t('howItWorksTitle')}
+        </h2>
+
+        {/*
+          The signature moment: scrolling here draws the graph — two people,
+          the link between them, then the tick that makes it a vouch. It is
+          the product's one sentence, animated, and it sits beside the steps
+          that explain it rather than floating on its own.
+        */}
+        <div className="mt-4 grid items-center gap-6 lg:grid-cols-[1fr_auto]">
+          <ol className="grid gap-3 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <Card
+                key={step.title}
+                as="li"
+                data-reveal="card"
+                style={{ '--reveal-delay': `${index * 90}ms` } as StyleWithVars}
+                className="flex h-full gap-4"
+              >
               <span
                 aria-hidden="true"
                 className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-100 font-semibold text-brand-700"
               >
                 {index + 1}
               </span>
-              <div>
-                <h3 className="font-medium">{step.title}</h3>
-                <p className="mt-1 text-ink-700">{step.body}</p>
-              </div>
-            </Card>
-          ))}
-        </ol>
+                <div>
+                  <h3 className="font-medium">{step.title}</h3>
+                  <p className="mt-1 text-ink-700">{step.body}</p>
+                </div>
+              </Card>
+            ))}
+          </ol>
+
+          <VouchNetworkArt
+            animated
+            className="mx-auto w-56 shrink-0 text-brand-600 lg:w-64"
+          />
+        </div>
       </section>
 
       {/* ---- Trust: who stands behind this -------------------------------- */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-10">
-        <Card className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Card className="flex flex-col gap-4 sm:flex-row sm:items-center" data-reveal="lift">
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-verify-100 text-verify-600">
             <IconShield className="size-6" />
           </span>
@@ -280,7 +318,7 @@ export default async function HomePage({ params }: PageProps) {
             brand-700, and this never lightens that ground. */}
         <TownscapeArt className="pointer-events-none absolute inset-x-0 bottom-0 h-48 w-full text-white/20" />
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4" data-reveal="swing">
             <LogoMark className="size-12" />
             <div>
               <h2 className="text-xl font-semibold text-white">{t('ctaTitle')}</h2>

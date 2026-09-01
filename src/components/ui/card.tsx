@@ -1,14 +1,21 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 export function Card({
   children,
   className,
   as: Tag = 'div',
+  ...rest
 }: {
   children: ReactNode;
   className?: string;
   as?: 'div' | 'article' | 'section' | 'li';
+  style?: CSSProperties;
+  /**
+   * Passes `data-*` through, so a card can opt into a scroll reveal without
+   * this component knowing anything about animation.
+   */
+  [dataAttribute: `data-${string}`]: unknown;
 }) {
   return (
     <Tag
@@ -16,6 +23,7 @@ export function Card({
         'rounded-card border border-ink-200 bg-paper-raised p-4 sm:p-5',
         className,
       )}
+      {...rest}
     >
       {children}
     </Tag>
