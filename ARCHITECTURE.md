@@ -369,6 +369,29 @@ transaction rolls the whole thing back. A missing `MAINTENANCE_SECRET` disables
 the maintenance endpoint rather than opening it. `ALLOW_RECOMMENDING_NON_USERS`
 defaults off.
 
+## Colour is measured, not judged
+
+The palette is authored in OKLCH, which is excellent for choosing colours and
+useless for judging contrast: two swatches at the same lightness value land
+either side of 4.5:1 depending on hue and chroma. `scripts/check-contrast.ts`
+converts every pair the UI actually uses to sRGB, computes the WCAG ratio, and
+runs in `npm run verify` and CI.
+
+It found three real failures on its first run, including form-control borders
+at 2.30:1 — below the 3:1 that WCAG 1.4.11 requires for anything identifying a
+control, and invisible on a cheap LCD held outdoors, which is where these forms
+get filled in.
+
+Pairs are classified by what the rule actually covers:
+
+- `text` (4.5:1) and `ui` (3:1) are **enforced** and fail the build.
+- `decor` — a non-interactive container edge — is **measured and reported but
+  not enforced**. WCAG sets no requirement there, and inventing a threshold
+  would just push every card toward looking like a wireframe. Card separation
+  is carried by the border and the surface lift together.
+
+Adding a new colour pairing to the UI means adding it to that file.
+
 ## Deviations from the brief
 
 | Brief said | What was built | Why |
