@@ -6,10 +6,12 @@ import {
   ENGAGEMENT_OUTCOMES,
   ENGAGEMENT_TYPES,
   INTEREST_STATUSES,
+  MEMBERSHIP_STATUSES,
   PAY_PERIODS,
   RELATIONSHIP_CONTEXTS,
   REPORTABLE_ENTITIES,
   REPORT_REASONS,
+  REPORT_STATUSES,
 } from '@/server/domain/constants';
 
 /**
@@ -209,4 +211,39 @@ export const reportSchema = z.object({
   entityId: publicIdSchema,
   reason: z.enum(REPORT_REASONS),
   detail: z.string().trim().max(500).nullish(),
+});
+
+/** The moderation queue defaults to what still needs reading. */
+export const listReportsQuerySchema = z.object({
+  status: z.enum(REPORT_STATUSES).default('open'),
+});
+
+/** `open` is not offered: a report is closed by being actioned or dismissed. */
+export const resolveReportSchema = z.object({
+  status: z.enum(['actioned', 'dismissed']),
+  note: z.string().trim().max(500).nullish(),
+});
+
+export const setHiddenSchema = z.object({
+  entityType: z.enum(REPORTABLE_ENTITIES),
+  entityId: publicIdSchema,
+  hidden: z.boolean(),
+  reason: z.string().trim().max(255).nullish(),
+});
+
+export const requestMembershipSchema = z.object({
+  membershipRef: z.string().trim().max(60).nullish(),
+});
+
+export const listMembershipsQuerySchema = z.object({
+  status: z.enum(MEMBERSHIP_STATUSES).optional(),
+});
+
+/**
+ * Revocation carries its reason in the query string because the action is a
+ * DELETE, and a DELETE with a body is unevenly supported by proxies and by
+ * `fetch` itself.
+ */
+export const revokeMembershipQuerySchema = z.object({
+  reason: z.string().trim().max(255).optional(),
 });

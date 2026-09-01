@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CURRENT_CONSENT_VERSION } from '@/server/consent/versions';
 
@@ -59,20 +60,17 @@ export default async function PrivacyPage({ params }: PageProps) {
       <Card className="mt-8">
         <h2 className="text-lg font-medium">{tProfile('exportData')}</h2>
         <p className="mt-2 text-ink-700">{tProfile('deleteWarning')}</p>
-        <p className="mt-4">
-          {/*
-            A plain anchor, deliberately. This endpoint returns a file with a
-            Content-Disposition header; next/link would client-side navigate
-            and the download would never start.
-          */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a
-            href="/api/me/export"
-            className="inline-flex min-h-touch items-center rounded-lg border border-ink-300 bg-paper-raised px-4 py-2 font-medium hover:bg-ink-100"
-          >
+        {/*
+          A GET form rather than a link: this endpoint streams a file with a
+          Content-Disposition header, so next/link would client-side navigate
+          and the download would never start. Matches the same control on the
+          profile page — one pattern, and no lint suppression.
+        */}
+        <form action="/api/me/export" className="mt-4">
+          <Button type="submit" variant="secondary">
             {tProfile('exportData')}
-          </a>
-        </p>
+          </Button>
+        </form>
       </Card>
 
       <p className="mt-8 text-sm text-ink-700">{tApp('byline')}</p>

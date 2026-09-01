@@ -413,6 +413,35 @@ export async function deleteAccount(
   await revokeAllSessions(person.id);
 }
 
+/**
+ * The person's own profile as the edit form needs it.
+ *
+ * Separate from `getPublicProfile` because that one resolves the locality to a
+ * display label, and a form needs the public id to preselect the picker with.
+ * Matching a label back to an id would silently move somebody whose ward
+ * shares a name with another.
+ */
+export async function getOwnEditableProfile(person: CurrentPerson): Promise<{
+  displayName: string;
+  headline: string | null;
+  localityPublicId: string | null;
+}> {
+  const row = await prisma.person.findUniqueOrThrow({
+    where: { id: person.id },
+    select: {
+      displayName: true,
+      headline: true,
+      locality: { select: { publicId: true } },
+    },
+  });
+
+  return {
+    displayName: row.displayName,
+    headline: row.headline,
+    localityPublicId: row.locality?.publicId ?? null,
+  };
+}
+
 /** Shown on the person's own settings page so they can check the number on file. */
 export async function getOwnMaskedPhone(person: CurrentPerson): Promise<string> {
   const row = await prisma.person.findUniqueOrThrow({

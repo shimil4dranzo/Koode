@@ -43,7 +43,7 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
   const t = useTranslations('recommendations');
   const tTaxonomy = useTranslations('taxonomy');
   const tCommon = useTranslations('common');
-  const { message: apiMessage, fieldMessage } = useApiMessages();
+  const { message: apiMessage, fieldMessage, focusFirstInvalid } = useApiMessages();
   const router = useRouter();
 
   const [subjectPhone, setSubjectPhone] = useState('');
@@ -81,7 +81,10 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
       router.push(`/people/${result.publicId}`);
       router.refresh();
     } catch (caught) {
-      if (caught instanceof ApiError) setFieldError(caught.fields);
+      if (caught instanceof ApiError) {
+        setFieldError(caught.fields);
+        if (Object.keys(caught.fields).length > 0) focusFirstInvalid();
+      }
       setError(apiMessage(caught));
     } finally {
       setBusy(false);
@@ -137,6 +140,8 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
         type="tel"
         inputMode="numeric"
         autoComplete="off"
+        pattern="[0-9+()\s-]{10,17}"
+        maxLength={17}
         value={subjectPhone}
         onChange={(event) => setSubjectPhone(event.target.value)}
         required

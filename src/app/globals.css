@@ -14,10 +14,25 @@
   --color-ink-900: oklch(0.19 0.012 250);
   --color-ink-700: oklch(0.36 0.014 250);
   --color-ink-500: oklch(0.53 0.014 250);
-  --color-ink-300: oklch(0.74 0.010 250);
-  --color-ink-200: oklch(0.86 0.007 250);
+
+  /* Border of a form control — an input, a select, a secondary button.
+     WCAG 1.4.11 requires 3:1 against the adjacent surface for anything that
+     identifies a control, and this is measured rather than judged by eye:
+     see `npm run check:contrast`. It sits darker than a designer's instinct
+     because at 2.3:1 the edge of a text field disappears on a cheap LCD held
+     outdoors, which is where these forms are actually filled in. */
+  --color-ink-300: oklch(0.66 0.012 250);
+
+  /* Border of a non-interactive container. WCAG does not require 3:1 here,
+     and forcing it makes every card read as a wireframe box. Raised from
+     1.5:1 to roughly 2:1 so the grouping survives sunlight without shouting. */
+  --color-ink-200: oklch(0.80 0.008 250);
   --color-ink-100: oklch(0.94 0.005 250);
-  --color-paper: oklch(0.99 0.003 95);
+
+  /* The page ground is deliberately a shade off white so that a white card
+     lifts off it on its own. Relying on the border alone to separate a card
+     from the page was what made the border have to work too hard. */
+  --color-paper: oklch(0.965 0.004 95);
   --color-paper-raised: oklch(1 0 0);
 
   /* Kerala green — the association's colour, and legible in sunlight. */
@@ -31,7 +46,10 @@
   --color-verify-600: oklch(0.52 0.13 250);
   --color-verify-100: oklch(0.95 0.03 250);
 
-  --color-warn-600: oklch(0.58 0.15 65);
+  /* Darker than it looks like it needs to be: the offline banner renders this
+     on --color-warn-100, and at 0.58 that pairing measured 3.74:1 — below the
+     4.5:1 required for body text. */
+  --color-warn-600: oklch(0.53 0.15 65);
   --color-warn-100: oklch(0.95 0.05 65);
   --color-danger-600: oklch(0.53 0.19 25);
   --color-danger-100: oklch(0.95 0.04 25);

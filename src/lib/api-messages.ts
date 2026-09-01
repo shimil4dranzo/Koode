@@ -52,5 +52,34 @@ export function useApiMessages() {
     [fromKey],
   );
 
-  return { message, fieldMessage, fromKey };
+  return { message, fieldMessage, fromKey, focusFirstInvalid };
+}
+
+/**
+ * Move focus to the first field the server rejected.
+ *
+ * Without this, a failed submit leaves focus on the submit button. A sighted
+ * user scrolls up and finds the red text; a screen-reader user is told
+ * "there was a problem" and then has to hunt through the form for it, and
+ * somebody using a phone keyboard has to tab back through every field.
+ *
+ * Queried from the DOM rather than held as refs because the field primitives
+ * generate their own ids with `useId`, and `aria-invalid` is already the
+ * marker they set — so this stays correct as forms change shape.
+ *
+ * Called on the next frame: React has to commit the error state, and therefore
+ * the `aria-invalid` attributes, before there is anything to find.
+ */
+export function focusFirstInvalid(): void {
+  requestAnimationFrame(() => {
+    const invalid = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (!invalid) return;
+
+    invalid.focus({ preventScroll: true });
+
+    // Honour prefers-reduced-motion: a smooth scroll is exactly the kind of
+    // movement that triggers discomfort for people who set it.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    invalid.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  });
 }

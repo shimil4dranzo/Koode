@@ -33,7 +33,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
   const tConsent = useTranslations('consent');
-  const { message: apiMessage, fieldMessage } = useApiMessages();
+  const { message: apiMessage, fieldMessage, focusFirstInvalid } = useApiMessages();
   const locale = useLocale();
   const router = useRouter();
 
@@ -64,7 +64,12 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
    * most.
    */
   function showError(caught: unknown): void {
-    if (caught instanceof ApiError) setFieldError(caught.fields);
+    if (caught instanceof ApiError) {
+      setFieldError(caught.fields);
+      // Send the user to the field that is actually wrong, rather than
+      // leaving focus on the submit button they just pressed.
+      if (Object.keys(caught.fields).length > 0) focusFirstInvalid();
+    }
     setError(apiMessage(caught));
   }
 
@@ -158,6 +163,13 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
             type="tel"
             inputMode="numeric"
             autoComplete="tel"
+            // Deliberately permissive: it catches letters or an obviously
+            // short number without a round trip, and cannot reject a spelling
+            // the server would accept. A stricter client pattern would have
+            // to restate normalizePhone's rules, and the day the two drift a
+            // user is locked out of their own number.
+            pattern="[0-9+()\s-]{10,17}"
+            maxLength={17}
             placeholder={t('phonePlaceholder')}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}

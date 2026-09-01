@@ -59,6 +59,12 @@ jobs:
         # migration with the wrong collation must never reach main.
         run: npm run db:normalize -- --check
 
+      - name: Check colour contrast
+        # The palette is authored in OKLCH, where contrast cannot be judged by
+        # eye — two swatches at the same lightness land either side of 4.5:1
+        # depending on hue. Measured instead.
+        run: npm run check:contrast
+
       - name: Typecheck
         run: npm run typecheck
 

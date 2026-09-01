@@ -130,7 +130,15 @@
     "filterCategory": "Type of work",
     "filterEngagement": "Engagement",
     "includeNearby": "Include nearby places",
-    "resultCount": "{count, plural, =0 {No results} one {# result} other {# results}}"
+    "resultCount": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "myPostings": "Work I have posted",
+    "myPostingsEmpty": "You have not posted any work yet.",
+    "status": {
+      "open": "Open",
+      "filled": "Filled",
+      "closed": "Closed",
+      "expired": "Expired"
+    }
   },
   "profile": {
     "title": "Profile",
@@ -151,7 +159,13 @@
     "verifiedMember": "Verified member, {org}",
     "pendingClaim": "This profile has not been confirmed by the person yet.",
     "notPublic": "This profile is not public.",
+    "viewPublic": "See what employers see",
+    "dataTitle": "Your data",
     "exportData": "Download my data",
+    "exportHint": "A file with everything Koode holds about you, including who wrote what about you.",
+    "removeSkill": "Delete {skill}",
+    "yearsCount": "{count, plural, one {# year} other {# years}}",
+    "saved": "Saved.",
     "deleteAccount": "Delete my account",
     "deleteWarning": "Your name and number are removed permanently. Recommendations written about you stay in the records without anything identifying you.",
     "deleteConfirm": "Yes, delete my account"
@@ -207,7 +221,13 @@
     "declined": "Not suitable",
     "withdrawn": "Withdrawn",
     "withdraw": "Withdraw my interest",
-    "myInterests": "Work I am interested in"
+    "myInterests": "Work I am interested in",
+    "myInterestsEmpty": "You have not expressed interest in any work yet.",
+    "expressed": "Interested",
+    "candidateCount": "{count, plural, =0 {Nobody yet} one {# person} other {# people}}",
+    "noteLabel": "What they said",
+    "expressedOn": "Interested on {date}",
+    "viewProfile": "See full profile"
   },
   "engagement": {
     "title": "Record what happened",
@@ -217,6 +237,7 @@
     "noteLabel": "Anything to add",
     "record": "Record it",
     "recorded": "Recorded. Thank you.",
+    "outcomeRecorded": "Recorded: {outcome}",
     "needEngagementError": "Record who did the work before marking this as filled.",
     "outcome": {
       "completed": "Work completed",
@@ -235,7 +256,12 @@
     "verified": "Verified member",
     "revoked": "Membership no longer active",
     "verify": "Verify this member",
-    "revoke": "Revoke membership"
+    "revoke": "Revoke membership",
+    "revokeConfirm": "Their verified badge is removed. Recommendations they have already written stay exactly as they are.",
+    "noOrgs": "You are not an office-bearer of any organisation.",
+    "noMembers": "No membership requests for this organisation.",
+    "requestedOn": "Asked on {date}",
+    "verifiedByOn": "Verified by {name}"
   },
   "admin": {
     "title": "Admin",
@@ -250,7 +276,17 @@
     "reportedBy": "Reported by {name}",
     "reportReason": "Reason",
     "suspendPerson": "Suspend this person",
-    "reinstatePerson": "Reinstate"
+    "reinstatePerson": "Reinstate",
+    "subtitle": "Reports to read, and memberships to confirm.",
+    "openReportCount": "{count, plural, =0 {Nothing to read} one {# report to read} other {# reports to read}}",
+    "pendingMembershipCount": "{count, plural, =0 {Nobody waiting} one {# person waiting} other {# people waiting}}",
+    "hideConfirm": "It stops being shown to everyone. Nothing is deleted, and you can restore it.",
+    "hidden": "Hidden",
+    "reportedOn": "Reported {date}",
+    "subjectLabel": "What was reported",
+    "subjectMissing": "This no longer exists.",
+    "anonymousReporter": "Someone who was not signed in",
+    "openSubject": "Open it"
   },
   "report": {
     "action": "Report this",
@@ -301,6 +337,20 @@
       "block": "Block",
       "panchayat": "Panchayat",
       "ward": "Ward"
+    },
+    "membershipStatus": {
+      "pending": "Waiting",
+      "verified": "Verified",
+      "revoked": "Revoked"
+    },
+    "membershipRole": {
+      "member": "Member",
+      "office_bearer": "Office-bearer"
+    },
+    "reportableEntity": {
+      "requirement": "Posting",
+      "recommendation": "Recommendation",
+      "person": "Person"
     }
   },
   "errors": {

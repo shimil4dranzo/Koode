@@ -22,11 +22,12 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:check": "tsx scripts/check-db.ts",
-    "verify": "npm run typecheck && npm run lint && npm run db:normalize -- --check && npm run test",
+    "verify": "npm run typecheck && npm run lint && npm run db:normalize -- --check && npm run check:contrast && npm run test",
     "db:normalize": "tsx scripts/normalize-migrations.ts",
     "bundle:report": "tsx scripts/bundle-report.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "check:contrast": "tsx scripts/check-contrast.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
