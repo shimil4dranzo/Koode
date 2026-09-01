@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RecommendationList } from '@/components/profile/recommendation-list';
 import { DangerZone } from '@/components/profile/danger-zone';
+import { GoogleUnlink } from '@/components/profile/google-link';
+import { isGoogleSsoEnabled } from '@/server/auth/google';
+import { prisma } from '@/server/db/client';
 import { getCurrentPerson } from '@/server/auth/session';
 import { canModerate } from '@/server/domain/person/rules';
 import { getPublicProfile } from '@/server/services/person.service';
@@ -48,6 +51,22 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
   if (!person) {
     redirect({ href: '/sign-in', locale });
     return null;
+  }
+
+  /**
+   * The one place the person's own linked e-mail is read: their settings.
+   * It never appears anywhere another user can see.
+   */
+  let googleSso: { enabled: boolean; linkedEmail: string | null } = {
+    enabled: false,
+    linkedEmail: null,
+  };
+  if (isGoogleSsoEnabled()) {
+    const row = await prisma.person.findUniqueOrThrow({
+      where: { id: person.id },
+      select: { googleSub: true, email: true },
+    });
+    googleSso = { enabled: true, linkedEmail: row.googleSub ? (row.email ?? '') : null };
   }
 
   const [
@@ -204,6 +223,35 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
           </ol>
         )}
       </section>
+
+      {googleSso.enabled ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold">{t('signInMethods')}</h2>
+          <Card className="mt-3">
+            {googleSso.linkedEmail ? (
+              <div className="flex flex-col gap-3">
+                <p>{t('googleLinkedAs', { email: googleSso.linkedEmail })}</p>
+                <div>
+                  <GoogleUnlink />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-ink-700">{t('linkGoogleHint')}</p>
+                {/* A plain anchor: the OAuth start route answers with a
+                    redirect to Google, which next/link must not intercept. */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                <a
+                  href="/api/auth/google/start?mode=link"
+                  className="inline-flex min-h-touch w-fit items-center rounded-lg border border-ink-300 bg-paper-raised px-4 py-2.5 font-medium hover:bg-ink-100"
+                >
+                  {t('linkGoogle')}
+                </a>
+              </div>
+            )}
+          </Card>
+        </section>
+      ) : null}
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold">{t('dataTitle')}</h2>

@@ -20,6 +20,8 @@ export const AUDIT_ACTIONS = {
   PERSON_REINSTATED: 'person.reinstated',
   PERSON_ANONYMIZED: 'person.anonymized',
   PERSON_EXPORTED: 'person.exported',
+  GOOGLE_LINKED: 'person.google_linked',
+  GOOGLE_UNLINKED: 'person.google_unlinked',
   CONSENT_ACCEPTED: 'consent.accepted',
   OTP_SENT: 'otp.sent',
   OTP_VERIFIED: 'otp.verified',

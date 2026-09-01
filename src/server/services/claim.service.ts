@@ -116,7 +116,9 @@ export async function getClaimPreview(token: string): Promise<ClaimPreview> {
  * phone — could accept or reject on the subject's behalf. The link proves
  * someone received the message; the code proves they hold the number.
  */
-export async function requestClaimOtp(token: string): Promise<{ maskedPhone: string }> {
+export async function requestClaimOtp(
+  token: string,
+): Promise<{ maskedPhone: string; devCode?: string }> {
   const invitation = await findInvitation(token);
   if (!invitation.person.phone) throw errors.notFound('claim.invalid');
 
@@ -132,7 +134,10 @@ export async function requestClaimOtp(token: string): Promise<{ maskedPhone: str
     data: { sentCount: { increment: 1 }, lastSentAt: new Date() },
   });
 
-  return { maskedPhone: result.maskedPhone };
+  return {
+    maskedPhone: result.maskedPhone,
+    ...(result.devCode !== undefined ? { devCode: result.devCode } : {}),
+  };
 }
 
 export type ClaimDecisionInput = {

@@ -48,6 +48,7 @@ export function ClaimDecision({
   const [code, setCode] = useState('');
   const [name, setName] = useState(subjectName);
   const [maskedPhone, setMaskedPhone] = useState('');
+  const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,10 +71,12 @@ export function ClaimDecision({
   const choose = (next: 'accept' | 'reject') =>
     run(async () => {
       setDecision(next);
-      const result = await api.post<{ maskedPhone: string }>(`/api/claim/${token}`, {
-        action: 'request_code',
-      });
+      const result = await api.post<{ maskedPhone: string; devCode?: string }>(
+        `/api/claim/${token}`,
+        { action: 'request_code' },
+      );
       setMaskedPhone(result.maskedPhone);
+      setDevCode(result.devCode ?? null);
       setStep('verify');
     });
 
@@ -160,6 +163,12 @@ export function ClaimDecision({
             <p className="mt-1 text-ink-700">{t('verifySubtitle')}</p>
             {maskedPhone ? (
               <p className="mt-1 text-sm text-ink-500">{maskedPhone}</p>
+            ) : null}
+            {devCode ? (
+              <p className="mt-3 rounded-lg border border-warn-600 bg-warn-100 px-3 py-2 text-sm">
+                {tAuth('devCodeNotice')}{' '}
+                <strong className="font-mono text-base tracking-widest">{devCode}</strong>
+              </p>
             ) : null}
           </div>
 

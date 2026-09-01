@@ -13,3 +13,5 @@ process.env.IP_HASH_SECRET ??= 'test-ip-hash-secret-at-least-32-chars-long';
 process.env.SMS_PROVIDER ??= 'console';
 process.env.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000';
 process.env.ALLOW_RECOMMENDING_NON_USERS ??= 'true';
+process.env.GOOGLE_CLIENT_ID ??= 'test-google-client-id';
+process.env.GOOGLE_CLIENT_SECRET ??= 'test-google-client-secret';

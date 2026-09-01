@@ -31,7 +31,17 @@ type VerifyResponse =
   | { status: 'needs_registration'; consentVersion: string }
   | { status: 'needs_consent'; consentVersion: string };
 
-export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
+export function SignInFlow({
+  localities,
+  googleEnabled,
+  initialErrorKey,
+}: {
+  localities: LocalityOption[];
+  /** True only when the server has Google credentials configured. */
+  googleEnabled: boolean;
+  /** An auth.* key carried back from an OAuth redirect, if any. */
+  initialErrorKey?: string;
+}) {
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
   const tConsent = useTranslations('consent');
@@ -42,13 +52,21 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [maskedPhone, setMaskedPhone] = useState('');
+  const [devCode, setDevCode] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [localityPublicId, setLocalityPublicId] = useState('');
   const [consentVersion, setConsentVersion] = useState('');
 
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (!initialErrorKey) return null;
+    try {
+      return t(initialErrorKey as never);
+    } catch {
+      return null;
+    }
+  });
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [resendIn, setResendIn] = useState(0);
 
@@ -90,11 +108,13 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
 
   const sendCode = () =>
     run(async () => {
-      const result = await api.post<{ maskedPhone: string; expiresInSeconds: number }>(
-        '/api/auth/otp',
-        { phone, purpose: 'login' },
-      );
+      const result = await api.post<{
+        maskedPhone: string;
+        expiresInSeconds: number;
+        devCode?: string;
+      }>('/api/auth/otp', { phone, purpose: 'login' });
       setMaskedPhone(result.maskedPhone);
+      setDevCode(result.devCode ?? null);
       setResendIn(30);
       setStep('code');
     });
@@ -184,6 +204,30 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
           <Button type="submit" size="lg" busy={busy}>
             {t('sendCode')}
           </Button>
+
+          {googleEnabled ? (
+            <>
+              <div className="flex items-center gap-3" aria-hidden="true">
+                <span className="h-px flex-1 bg-ink-200" />
+                <span className="text-sm text-ink-500">{tCommon('or')}</span>
+                <span className="h-px flex-1 bg-ink-200" />
+              </div>
+
+              {/* A full-page redirect, not a popup: popups die under mobile
+                  browsers' blockers, and this is a phone-first product. A raw
+                  anchor on purpose — the route answers with a 302 to Google,
+                  which next/link's client navigation cannot follow. */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+              <a
+                href="/api/auth/google/start?mode=login"
+                className="inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border border-ink-300 bg-paper-raised px-6 text-lg font-medium hover:bg-ink-100"
+              >
+                <GoogleGlyph />
+                {t('continueWithGoogle')}
+              </a>
+              <p className="text-sm text-ink-700">{t('googleHint')}</p>
+            </>
+          ) : null}
         </form>
       ) : null}
 
@@ -198,6 +242,15 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
           <div>
             <h1 className="text-2xl font-semibold">{t('otpTitle')}</h1>
             <p className="mt-2 text-ink-700">{t('otpSubtitle', { phone: maskedPhone })}</p>
+            {devCode ? (
+              // Development only: the server includes the code solely when it
+              // is running a dev build with the console SMS stub, where no
+              // message is actually delivered anywhere.
+              <p className="mt-3 rounded-lg border border-warn-600 bg-warn-100 px-3 py-2 text-sm">
+                {t('devCodeNotice')}{' '}
+                <strong className="font-mono text-base tracking-widest">{devCode}</strong>
+              </p>
+            ) : null}
           </div>
 
           <TextField
@@ -315,5 +368,32 @@ function ConsentNotice() {
         <li>{t('pointNoSelling')}</li>
       </ul>
     </div>
+  );
+}
+
+/**
+ * Google's "G", drawn to their brand spec colours. Decorative — the button
+ * label carries the meaning.
+ */
+function GoogleGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5.5" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.46 1.15-4.06 1.15-3.13 0-5.78-2.11-6.72-4.95H1.27v3.1A12 12 0 0 0 12 24Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.29a7.2 7.2 0 0 1 0-4.58v-3.1H1.27a12 12 0 0 0 0 10.78l4.01-3.1Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.76c1.76 0 3.34.6 4.59 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.61l4.01 3.1C6.22 6.87 8.87 4.76 12 4.76Z"
+      />
+    </svg>
   );
 }

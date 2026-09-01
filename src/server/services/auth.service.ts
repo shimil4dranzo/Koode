@@ -1,4 +1,5 @@
 import { prisma } from '@/server/db/client';
+import { env } from '@/server/env';
 import { generateOtpCode, hashIp, safeEqual, sha256 } from '@/server/crypto';
 import { errors } from '@/server/errors';
 import { maskPhone, phoneLogRef } from '@/server/phone';
@@ -38,6 +39,19 @@ export type SendOtpResult = {
   /** Masked, for the "we sent a code to …" line. Never the full number. */
   maskedPhone: string;
   expiresInSeconds: number;
+  /**
+   * The code itself — DEVELOPMENT ONLY.
+   *
+   * With the console SMS provider nothing is actually delivered; the code
+   * lands in a server log the person testing the app is usually not watching,
+   * which reads as "OTP is broken". So a development build hands the code to
+   * the UI and the sign-in screen shows it.
+   *
+   * Two locks, either sufficient alone: NODE_ENV must be exactly
+   * 'development', and the provider must be the console stub — and env.ts
+   * refuses to boot production with the console provider at all.
+   */
+  devCode?: string;
 };
 
 /**
@@ -95,6 +109,9 @@ export async function sendOtp(
   return {
     maskedPhone: maskPhone(phone),
     expiresInSeconds: Math.floor(OTP_TTL_MS / 1000),
+    ...(env.NODE_ENV === 'development' && env.SMS_PROVIDER === 'console'
+      ? { devCode: code }
+      : {}),
   };
 }
 

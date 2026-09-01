@@ -393,6 +393,9 @@ export async function deleteAccount(
         displayName: ANONYMISED_DISPLAY_NAME,
         headline: null,
         localityId: null,
+        // The convenience credential goes with the identity it rode on.
+        googleSub: null,
+        email: null,
         anonymizedAt: now,
       },
     });

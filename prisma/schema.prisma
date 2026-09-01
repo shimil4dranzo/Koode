@@ -159,6 +159,16 @@ model Person {
   displayName String  @map("display_name") @db.VarChar(120)
   localityId  BigInt? @map("locality_id")
 
+  /// Google's stable account id, set when the person links Google from their
+  /// profile. Purely a convenience credential: identity stays the phone
+  /// number, first registration is always phone+OTP, and this only lets a
+  /// returning user skip the SMS. Nulled on unlink and on anonymisation.
+  googleSub String? @unique @map("google_sub") @db.VarChar(64)
+  /// The e-mail Google reported at link time. Informational only — never an
+  /// identifier, never required, shown to the account owner so they can see
+  /// which Google account is attached.
+  email String? @db.VarChar(255)
+
   /// One of PERSON_STATUSES (pending_claim|active|suspended).
   status String @default("pending_claim") @db.VarChar(20)
 

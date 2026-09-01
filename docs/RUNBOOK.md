@@ -92,7 +92,20 @@ not do this before. That flag governs whether a member can enter a stranger's
 name and number, and the only thing protecting that stranger is the claim
 invitation reaching them.
 
-### 8. Replace the consent text
+### 8. (Optional) Enable Google sign-in
+
+Create an OAuth 2.0 Client ID (type: Web application) in Google Cloud Console,
+add the redirect URI `https://<host>/api/auth/google/callback`, and set
+`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Leaving them blank hides the
+feature completely.
+
+Scope note, worth repeating to whoever asks for more: Google here is a
+convenience credential. Identity is the phone number — the claim flow, the
+contact reveal and duplicate detection all depend on it — so a Google account
+can only ever be attached to an existing phone-verified profile, from the
+profile page. It can never register.
+
+### 9. Replace the consent text
 
 `src/server/consent/versions.ts` currently references placeholder copy written
 by the engineering team. It describes the system accurately but has not been
@@ -100,7 +113,7 @@ reviewed for DPDP Act 2023 compliance. Replace it, add a new version entry, and
 bump `CURRENT_CONSENT_VERSION` — never edit a published version, because
 existing records point at it.
 
-### 9. Verify the checklist
+### 10. Verify the checklist
 
 ```bash
 npm run db:check

@@ -30,7 +30,8 @@
     "choose": "Choose one",
     "retry": "Try again",
     "language": "Language",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "or": "or"
   },
   "nav": {
     "home": "Home",
@@ -87,7 +88,13 @@
     "localityLabel": "Where you are",
     "completeProfile": "Finish signing up",
     "signedOut": "You have been signed out.",
-    "sessionExpired": "Your session has ended. Please sign in again."
+    "sessionExpired": "Your session has ended. Please sign in again.",
+    "devCodeNotice": "Development build — no SMS is sent. Your code:",
+    "continueWithGoogle": "Continue with Google",
+    "googleHint": "Works once you have added Google to your account from your profile.",
+    "googleNotLinked": "That Google account is not attached to any Koode profile yet. Sign in with your mobile number first, then add Google from your profile.",
+    "googleFailed": "Google sign-in did not complete. Please try again, or use your mobile number.",
+    "accountSuspendedNotice": "This account has been suspended."
   },
   "consent": {
     "title": "Before you continue",
@@ -180,7 +187,15 @@
     "saved": "Saved.",
     "deleteAccount": "Delete my account",
     "deleteWarning": "Your name and number are removed permanently. Recommendations written about you stay in the records without anything identifying you.",
-    "deleteConfirm": "Yes, delete my account"
+    "deleteConfirm": "Yes, delete my account",
+    "signInMethods": "Sign-in methods",
+    "googleLinkedAs": "Google is attached ({email}). You can sign in without an SMS.",
+    "linkGoogleHint": "Attach Google to sign in without waiting for an SMS. Your mobile number stays your identity.",
+    "linkGoogle": "Attach Google sign-in",
+    "unlinkGoogle": "Remove Google",
+    "unlinkGoogleConfirm": "Google will no longer sign you in. Your mobile number keeps working as always.",
+    "googleLinked": "Google sign-in attached.",
+    "googleTaken": "That Google account is already attached to a different Koode profile."
   },
   "recommendations": {
     "title": "Recommend someone",

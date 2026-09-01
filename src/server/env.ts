@@ -32,6 +32,13 @@ const schema = z.object({
 
   SMS_PROVIDER: z.enum(['console']).default('console'),
 
+  /**
+   * Google sign-in — a convenience credential attached to phone-verified
+   * accounts, inert until BOTH are set. See src/server/auth/google.ts.
+   */
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
+
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 
   ALLOW_RECOMMENDING_NON_USERS: z
