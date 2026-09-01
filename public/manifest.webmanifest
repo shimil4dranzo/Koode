@@ -1,0 +1,48 @@
+{
+  "name": "Koode — കൂടെ",
+  "short_name": "Koode",
+  "description": "Local work in Edakkara, on the strength of a local word. A KVVES Edakkara initiative.",
+  "start_url": "/ml",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fcfcfa",
+  "theme_color": "#1c6b45",
+  "lang": "ml",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Openings",
+      "short_name": "Openings",
+      "url": "/ml/openings",
+      "description": "Browse work near you"
+    },
+    {
+      "name": "Post work",
+      "short_name": "Post",
+      "url": "/ml/openings/new",
+      "description": "Post a requirement"
+    }
+  ]
+}

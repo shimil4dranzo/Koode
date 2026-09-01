@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { ClaimDecision } from '@/components/claim/claim-decision';
 import { getClaimPreview } from '@/server/services/claim.service';
 import { isAppError } from '@/server/errors';
-import type { RelationshipContext } from '@/server/domain/constants';
 
 type PageProps = { params: Promise<{ locale: string; token: string }> };
 

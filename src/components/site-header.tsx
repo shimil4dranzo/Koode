@@ -16,12 +16,28 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-ink-200 bg-paper-raised">
-      <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 py-3">
+      {/*
+        Two rows on a narrow screen, one on a wide one.
+
+        Malayalam labels are considerably longer than their English
+        equivalents — "പ്രവേശിക്കുക" against "Sign in" — and a single row sized
+        against English clips the language switcher off the right edge at
+        360px. Wrapping is the fix rather than shrinking the text, because
+        these labels are already at the minimum comfortable reading size.
+      */}
+      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <Link href="/" className="flex flex-col leading-tight">
           <span className="text-xl font-semibold text-brand-700">{tApp('name')}</span>
         </Link>
 
-        <nav aria-label={tNav('menu')} className="ms-auto flex items-center gap-1">
+        <div className="ms-auto">
+          <LanguageSwitcher />
+        </div>
+
+        <nav
+          aria-label={tNav('menu')}
+          className="flex w-full items-center gap-1 sm:w-auto sm:order-first sm:ms-auto"
+        >
           <Link
             href="/openings"
             className="inline-flex min-h-touch items-center rounded-lg px-3 py-2 text-base hover:bg-ink-100"
@@ -44,8 +60,6 @@ export async function SiteHeader() {
               {tNav('signIn')}
             </Link>
           )}
-
-          <LanguageSwitcher />
         </nav>
       </div>
     </header>

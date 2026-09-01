@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { SelectField, TextField } from '@/components/ui/field';
 import { ApiError, api } from '@/lib/api';
+import { useApiMessages } from '@/lib/api-messages';
 import type { LocalityOption } from '@/server/services/locality.service';
 
 /**
@@ -32,7 +33,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
   const tConsent = useTranslations('consent');
-  const tErrors = useTranslations('errors');
+  const { message: apiMessage, fieldMessage } = useApiMessages();
   const locale = useLocale();
   const router = useRouter();
 
@@ -63,19 +64,8 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
    * most.
    */
   function showError(caught: unknown): void {
-    if (caught instanceof ApiError) {
-      setFieldError(caught.fields);
-      // `messageKey` is "errors.somethingSpecific"; the namespace is stripped
-      // because this component's translator is already scoped to it.
-      const key = caught.messageKey.replace(/^errors\./, '');
-      try {
-        setError(tErrors(key as never));
-      } catch {
-        setError(tErrors('unexpected'));
-      }
-      return;
-    }
-    setError(tErrors('unexpected'));
+    if (caught instanceof ApiError) setFieldError(caught.fields);
+    setError(apiMessage(caught));
   }
 
   async function run(action: () => Promise<void>): Promise<void> {
@@ -162,7 +152,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
           <TextField
             label={t('phoneLabel')}
             help={t('phoneHelp')}
-            error={fieldError.phone}
+            error={fieldMessage(fieldError, 'phone')}
             // type="tel" + numeric inputmode brings up the phone keypad, and
             // autocomplete lets the browser fill a saved number.
             type="tel"
@@ -196,7 +186,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
 
           <TextField
             label={t('otpLabel')}
-            error={fieldError.code}
+            error={fieldMessage(fieldError, 'code')}
             type="text"
             inputMode="numeric"
             // Lets Android and iOS offer the code straight from the SMS.
@@ -248,7 +238,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
 
           <TextField
             label={t('nameLabel')}
-            error={fieldError.displayName}
+            error={fieldMessage(fieldError, 'displayName')}
             placeholder={t('namePlaceholder')}
             autoComplete="name"
             value={displayName}

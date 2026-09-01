@@ -39,6 +39,23 @@ export function noContent(): NextResponse {
   return new NextResponse(null, { status: 204 });
 }
 
+/**
+ * Turn a Zod issue message into an i18n key.
+ *
+ * Where a schema supplies its own message it is already a key, like
+ * `errors.invalidPhone`. Where it does not, Zod generates English prose
+ * ("Too small: expected string to have >=2 characters"), which must never
+ * reach a user reading the app in Malayalam — and can quote the offending
+ * value, which may be a phone number.
+ *
+ * Fixed here rather than in each client so a Route Handler, a Server Action
+ * and a future bot all get a key, and no client has to guess whether a string
+ * is translatable.
+ */
+function toMessageKey(message: string): string {
+  return message.startsWith('errors.') ? message : 'errors.validationFailed';
+}
+
 function errorBody(error: AppError): { error: ApiError } {
   return {
     error: {
@@ -70,9 +87,7 @@ export function fail(error: unknown): NextResponse {
     const fieldErrors: Record<string, string> = {};
     for (const issue of error.issues) {
       const path = issue.path.join('.') || '_';
-      // The message is a validation description, not user data, but it can
-      // quote the offending value — scrub it before it leaves the server.
-      fieldErrors[path] ??= redactPhonesInText(issue.message);
+      fieldErrors[path] ??= toMessageKey(issue.message);
     }
 
     return NextResponse.json(

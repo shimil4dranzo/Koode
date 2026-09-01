@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ml">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>കൂടെ · ഓഫ്‌ലൈൻ</title>
+    <!--
+      Static and self-contained: this page has to render with no network and no
+      JavaScript, so nothing here may reference a stylesheet, a font or a
+      script. Both languages are shown at once because we cannot know which one
+      the user chose without reading their cookie, and this is not the moment
+      to get that wrong.
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: #fcfcfa;
+        color: #1f2225;
+        font-family:
+          system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans',
+          'Noto Sans Malayalam', 'Malayalam Sangam MN', 'Nirmala UI', 'Manjari',
+          sans-serif;
+        font-size: 17px;
+        line-height: 1.65;
+      }
+      main {
+        max-width: 24rem;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        margin: 0 0 1rem;
+        color: #4a4f55;
+      }
+      .divider {
+        height: 1px;
+        background: #dcdfe3;
+        margin: 1.5rem 0;
+      }
+      a {
+        display: inline-block;
+        min-height: 44px;
+        padding: 0.7rem 1.5rem;
+        border-radius: 0.5rem;
+        background: #1c6b45;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 lang="ml">നിങ്ങൾ ഓഫ്‌ലൈനാണ്</h1>
+      <p lang="ml">
+        ഇതിന് കണക്ഷൻ വേണം. നേരത്തെ തുറന്ന പേജുകൾ ഇപ്പോഴും പ്രവർത്തിക്കും.
+      </p>
+
+      <div class="divider"></div>
+
+      <h1 lang="en">You are offline</h1>
+      <p lang="en">
+        Koode needs a connection for this. The pages you have already opened
+        still work.
+      </p>
+
+      <a href="/" lang="en">Try again</a>
+    </main>
+  </body>
+</html>

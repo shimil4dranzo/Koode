@@ -17,19 +17,42 @@ export type PlatformCounts = {
 
 const ZERO: PlatformCounts = { openRequirements: 0, activePeople: 0, recommendations: 0 };
 
+/**
+ * These numbers are decoration. Give them two seconds and no more.
+ *
+ * Without this cap, an unreachable database makes the home page wait out the
+ * driver's connect timeout before rendering — three counts, ten seconds each.
+ * A visitor on a bad connection would conclude Koode is broken, over three
+ * numbers they did not ask for.
+ */
+const COUNT_TIMEOUT_MS = 2_000;
+
+function withTimeout<T>(work: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<T>((resolve) => {
+      setTimeout(() => resolve(fallback), COUNT_TIMEOUT_MS).unref?.();
+    }),
+  ]);
+}
+
 async function countAll(): Promise<PlatformCounts> {
   const now = new Date();
 
   try {
-    const [openRequirements, activePeople, recommendations] = await Promise.all([
-      prisma.requirement.count({
-        where: { status: 'open', hiddenAt: null, expiresAt: { gt: now } },
-      }),
-      // `pending_claim` people are excluded: they are not public, and counting
-      // them would let the number reveal how many unclaimed profiles exist.
-      prisma.person.count({ where: { status: 'active', anonymizedAt: null } }),
-      prisma.recommendation.count({ where: { status: 'active', hiddenAt: null } }),
-    ]);
+    const [openRequirements, activePeople, recommendations] = await withTimeout(
+      Promise.all([
+        prisma.requirement.count({
+          where: { status: 'open', hiddenAt: null, expiresAt: { gt: now } },
+        }),
+        // `pending_claim` people are excluded: they are not public, and
+        // counting them would let the number reveal how many unclaimed
+        // profiles exist.
+        prisma.person.count({ where: { status: 'active', anonymizedAt: null } }),
+        prisma.recommendation.count({ where: { status: 'active', hiddenAt: null } }),
+      ]),
+      [0, 0, 0],
+    );
 
     return { openRequirements, activePeople, recommendations };
   } catch (error) {

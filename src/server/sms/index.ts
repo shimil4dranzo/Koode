@@ -34,6 +34,45 @@ export interface SmsSender {
 }
 
 /**
+ * Optionally append each message to a file, as one JSON object per line.
+ *
+ * Two uses, both real:
+ *  - a developer can `tail` it instead of hunting through Next's dev output
+ *  - the end-to-end tests read the one-time password and the claim link from
+ *    it, which is what makes the claim flow testable at all without a real
+ *    SMS provider
+ *
+ * Only active when SMS_LOG_FILE is set, and only reachable through the console
+ * provider, which production refuses to run. There is no HTTP surface here:
+ * an endpoint that hands out one-time passwords would be a liability whatever
+ * guard sat in front of it.
+ */
+async function appendToSmsLog(message: SmsMessage, reference: string): Promise<void> {
+  const path = process.env.SMS_LOG_FILE;
+  if (!path) return;
+
+  try {
+    const { appendFile } = await import('node:fs/promises');
+    await appendFile(
+      path,
+      `${JSON.stringify({
+        at: new Date().toISOString(),
+        reference,
+        kind: message.kind,
+        to: message.to,
+        body: message.body,
+      })}\n`,
+      'utf8',
+    );
+  } catch (error) {
+    console.warn(
+      '[sms] could not write SMS_LOG_FILE:',
+      error instanceof Error ? error.message : 'unknown error',
+    );
+  }
+}
+
+/**
  * Writes the message to the server log instead of sending it.
  *
  * The recipient is logged as an irreversible reference, never as digits: an
@@ -45,6 +84,8 @@ export interface SmsSender {
 class ConsoleSmsSender implements SmsSender {
   async send(message: SmsMessage): Promise<SmsResult> {
     const reference = `console-${Date.now()}`;
+
+    await appendToSmsLog(message, reference);
 
     console.warn(
       [

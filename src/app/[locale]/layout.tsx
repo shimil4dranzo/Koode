@@ -5,6 +5,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { ServiceWorkerRegistrar } from '@/components/pwa/service-worker-registrar';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 import '@/app/globals.css';
 
 type LayoutProps = {
@@ -63,10 +65,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           >
             {t('skipToContent')}
           </a>
+          <ServiceWorkerRegistrar />
           <SiteHeader />
           <main id="main" className="flex-1 w-full">
             {children}
           </main>
+          <InstallPrompt />
           <SiteFooter />
         </NextIntlClientProvider>
       </body>

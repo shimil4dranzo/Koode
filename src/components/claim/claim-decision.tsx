@@ -6,7 +6,8 @@ import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TextField } from '@/components/ui/field';
-import { ApiError, api } from '@/lib/api';
+import { api } from '@/lib/api';
+import { useApiMessages } from '@/lib/api-messages';
 
 /**
  * Accept or reject a claim invitation.
@@ -36,9 +37,9 @@ export function ClaimDecision({
   referrerName: string;
 }) {
   const t = useTranslations('claim');
-  const tErrors = useTranslations('errors');
   const tAuth = useTranslations('auth');
   const tCommon = useTranslations('common');
+  const { message: apiMessage } = useApiMessages();
   const locale = useLocale();
   const router = useRouter();
 
@@ -51,16 +52,7 @@ export function ClaimDecision({
   const [error, setError] = useState<string | null>(null);
 
   function showError(caught: unknown): void {
-    if (caught instanceof ApiError) {
-      const key = caught.messageKey.replace(/^errors\./, '');
-      try {
-        setError(tErrors(key as never));
-        return;
-      } catch {
-        // Falls through to the generic message below.
-      }
-    }
-    setError(tErrors('unexpected'));
+    setError(apiMessage(caught));
   }
 
   async function run(action: () => Promise<void>): Promise<void> {

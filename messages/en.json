@@ -27,6 +27,7 @@
     "showLess": "Show less",
     "none": "None",
     "all": "All",
+    "choose": "Choose one",
     "retry": "Try again",
     "language": "Language",
     "skipToContent": "Skip to main content"
@@ -177,7 +178,8 @@
     "blockedError": "This person has asked not to be recommended by you.",
     "notVerifiedError": "Only verified members can write recommendations.",
     "pendingInvite": "We have sent {name} a message asking them to confirm. Nothing is shown publicly until they do.",
-    "countLabel": "{count, plural, =0 {No recommendations} one {# recommendation} other {# recommendations}}"
+    "countLabel": "{count, plural, =0 {No recommendations} one {# recommendation} other {# recommendations}}",
+    "nonUsersDisabledNotice": "Right now you can only recommend someone who is already on Koode. Recommending a person who has not signed up is switched off until we can send them a message asking their permission."
   },
   "claim": {
     "title": "Someone has recommended you",
