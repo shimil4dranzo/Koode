@@ -13,6 +13,9 @@
  * means adding it here.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 type Rgb = { r: number; g: number; b: number };
 
 /** OKLCH → linear sRGB → gamma-encoded sRGB (Björn Ottosson's transform). */
@@ -62,28 +65,47 @@ function hex({ r, g, b }: Rgb): string {
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
-/** Kept in step with the @theme block in src/app/globals.css. */
-const TOKENS: Record<string, Rgb> = {
-  'ink-900': oklchToSrgb(0.19, 0.012, 250),
-  'ink-700': oklchToSrgb(0.36, 0.014, 250),
-  'ink-500': oklchToSrgb(0.53, 0.014, 250),
-  'ink-300': oklchToSrgb(0.64, 0.012, 250),
-  'ink-200': oklchToSrgb(0.8, 0.008, 250),
-  'ink-100': oklchToSrgb(0.94, 0.005, 250),
-  paper: oklchToSrgb(0.965, 0.004, 95),
-  'paper-raised': oklchToSrgb(1, 0, 0),
-  white: { r: 1, g: 1, b: 1 },
-  'brand-700': oklchToSrgb(0.42, 0.11, 155),
-  'brand-600': oklchToSrgb(0.5, 0.13, 155),
-  'brand-500': oklchToSrgb(0.58, 0.14, 155),
-  'brand-100': oklchToSrgb(0.94, 0.03, 155),
-  'verify-600': oklchToSrgb(0.52, 0.13, 250),
-  'verify-100': oklchToSrgb(0.95, 0.03, 250),
-  'warn-600': oklchToSrgb(0.53, 0.15, 65),
-  'warn-100': oklchToSrgb(0.95, 0.05, 65),
-  'danger-600': oklchToSrgb(0.53, 0.19, 25),
-  'danger-100': oklchToSrgb(0.95, 0.04, 25),
-};
+/**
+ * The palette, read straight out of the stylesheet.
+ *
+ * This used to be a hand-copied table with a comment asking the next person to
+ * keep it in step. That is a contrast checker whose failure mode is measuring
+ * colours the app does not actually use — it would keep reporting "all pass"
+ * against stale values while the real UI drifted. Parsing the source of truth
+ * removes the possibility.
+ */
+const TOKENS: Record<string, Rgb> = (() => {
+  const css = readFileSync(
+    join(process.cwd(), 'src', 'app', 'globals.css'),
+    'utf8',
+  );
+
+  const tokens: Record<string, Rgb> = {
+    // Not a token: the literal white used for text on coloured grounds.
+    white: { r: 1, g: 1, b: 1 },
+  };
+
+  // --color-<name>: oklch(<L> <C> <H>);
+  const pattern =
+    /--color-([a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/g;
+
+  for (const match of css.matchAll(pattern)) {
+    const [, name, l, c, h] = match;
+    if (name === undefined || l === undefined || c === undefined || h === undefined) {
+      continue;
+    }
+    tokens[name] = oklchToSrgb(Number(l), Number(c), Number(h));
+  }
+
+  if (Object.keys(tokens).length < 5) {
+    throw new Error(
+      'Parsed almost no colour tokens from globals.css — the @theme block or ' +
+        'the oklch() syntax has changed, and this check is now measuring nothing.',
+    );
+  }
+
+  return tokens;
+})();
 
 type Pair = {
   fg: keyof typeof TOKENS;
@@ -115,6 +137,16 @@ const PAIRS: Pair[] = [
   { fg: 'ink-300', bg: 'paper', where: 'chip border / switch track on the page ground', kind: 'ui' },
   { fg: 'ink-200', bg: 'paper', where: 'card border', kind: 'decor' },
   { fg: 'paper-raised', bg: 'paper', where: 'card surface lift', kind: 'decor' },
+
+  // The hero band. Its whole reason for being dark is that the WebGL graph
+  // needs a dark ground, so every pairing on it is measured rather than
+  // assumed — light text on dark is easy to get subtly wrong.
+  { fg: 'white', bg: 'night-900', where: 'hero headline', kind: 'text' },
+  { fg: 'night-300', bg: 'night-900', where: 'hero body and stat labels', kind: 'text' },
+  { fg: 'white', bg: 'night-800', where: 'text on a hero vouch card', kind: 'text' },
+  { fg: 'night-300', bg: 'night-800', where: 'attribution on a hero vouch card', kind: 'text' },
+  { fg: 'night-900', bg: 'brand-500', where: 'hero primary button label', kind: 'text' },
+  { fg: 'brand-500', bg: 'night-900', where: 'hero accent mark', kind: 'ui' },
 
   { fg: 'white', bg: 'brand-600', where: 'primary button label', kind: 'text' },
   { fg: 'white', bg: 'brand-700', where: 'closing CTA heading on the green band', kind: 'text' },
