@@ -7,7 +7,9 @@ import { createSession, getCurrentPerson } from '@/server/auth/session';
 import { readMeta } from '@/server/http/request';
 import { AUDIT_ACTIONS, recordAudit, recordAuditSafely } from '@/server/audit';
 import {
+  GOOGLE_SIGNUP_COOKIE,
   GOOGLE_STATE_COOKIE,
+  createSignupTicket,
   exchangeAndVerify,
   isGoogleSsoEnabled,
   verifyState,
@@ -22,11 +24,10 @@ export const dynamic = 'force-dynamic';
  * never a JSON blob: whatever went wrong, the person is mid-navigation in a
  * browser tab, not a client parsing an API.
  *
- * The invariant enforced here is the one the whole feature is scoped around:
- * a Google account that is not attached to an existing phone-verified profile
- * cannot get in and cannot create one. `login` with an unknown account
- * redirects to sign-in with an explanation; only `link` — which requires a
- * live session — ever writes a googleSub.
+ * Three outcomes for `login`: a known googleSub signs straight in; a
+ * verified-email match attaches Google to that existing account and signs in;
+ * anything else becomes a sign-up ticket and a completion screen — an account
+ * is only ever created after consent is shown and accepted there.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const locale = localeOf(request);
@@ -88,13 +89,55 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // mode === 'login'
-  const person = await prisma.person.findUnique({
+  let person = await prisma.person.findUnique({
     where: { googleSub: identity.sub },
     select: { id: true, publicId: true, status: true, anonymizedAt: true },
   });
 
+  if (!person) {
+    // Same address, password account: attach the Google credential rather
+    // than minting a duplicate person. Safe because Google asserted
+    // email_verified — without that flag this branch would let anyone claim
+    // an account by registering its address at Google.
+    const byEmail = await prisma.person.findUnique({
+      where: { email: identity.email },
+      select: { id: true, publicId: true, status: true, anonymizedAt: true },
+    });
+
+    if (byEmail && !byEmail.anonymizedAt) {
+      await prisma.$transaction(async (tx) => {
+        await tx.person.update({
+          where: { id: byEmail.id },
+          data: { googleSub: identity.sub },
+        });
+        await recordAudit(
+          {
+            action: AUDIT_ACTIONS.GOOGLE_LINKED,
+            actorPersonId: byEmail.id,
+            entityType: 'person',
+            entityId: byEmail.publicId,
+            metadata: { via: 'verified_email_match' },
+            context: meta,
+          },
+          tx,
+        );
+      });
+      person = byEmail;
+    }
+  }
+
   if (!person || person.anonymizedAt) {
-    return failTo('/sign-in', 'googleNotLinked');
+    // First time here: park the verified identity and collect name + consent
+    // on the completion screen. No account exists until that is accepted.
+    const response = redirectTo(request, `/${locale}/sign-in?google=new`);
+    response.cookies.set(GOOGLE_SIGNUP_COOKIE, createSignupTicket(identity), {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 900,
+    });
+    return response;
   }
   if (person.status !== 'active') {
     return failTo('/sign-in', 'accountSuspended');

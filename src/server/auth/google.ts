@@ -3,14 +3,15 @@ import { env } from '@/server/env';
 import { errors } from '@/server/errors';
 
 /**
- * Google sign-in, scoped deliberately.
+ * Google sign-in.
  *
- * The phone number is Koode's identity anchor — the claim flow, contact
- * reveal and duplicate-detection all hang off it, and Google does not supply
- * one. So Google is a CONVENIENCE credential, never an identity: first
- * registration is always phone + OTP, a signed-in person may attach Google
- * from their profile, and from then on "Continue with Google" is a way to
- * skip the SMS. An unlinked Google account cannot create a profile.
+ * Since the owner's 2026-09-01 identity decision, Google is a full sign-in
+ * and sign-up method alongside e-mail+password. A first-time Google account
+ * does not become a profile on the spot, though: the callback parks the
+ * verified identity in a signed ticket and the completion screen collects the
+ * display name and explicit consent — DPDP consent cannot be inferred from an
+ * OAuth redirect. A verified-email match attaches to the existing account
+ * instead of minting a duplicate.
  *
  * Implemented with the standard authorization-code flow and no new
  * dependency: the token exchange is one fetch, and the id_token is validated
@@ -107,9 +108,8 @@ export function buildAuthUrl(state: string): string {
   url.searchParams.set('client_id', clientId);
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('response_type', 'code');
-  // openid+email is all this feature needs; asking for less than we could is
-  // the point of scoping.
-  url.searchParams.set('scope', 'openid email');
+  // Minimal scope; profile is there solely so sign-up can prefill the name.
+  url.searchParams.set('scope', 'openid email profile');
   url.searchParams.set('state', state);
   // Always show the chooser: on a shared phone, silently reusing the last
   // Google session would attach the wrong account.
@@ -122,6 +122,8 @@ export type GoogleIdentity = {
   /** Google's stable account id — the only value we key on. */
   sub: string;
   email: string;
+  /** Display name as Google has it; empty when the scope was not granted. */
+  name: string;
 };
 
 type TokeninfoResponse = {
@@ -131,6 +133,7 @@ type TokeninfoResponse = {
   email?: string;
   email_verified?: string;
   exp?: string;
+  name?: string;
 };
 
 /**
@@ -191,5 +194,55 @@ export function assertValidClaims(
     throw errors.validation('errors.unexpected');
   }
 
-  return { sub: info.sub, email: info.email as string };
+  return { sub: info.sub, email: info.email as string, name: info.name ?? '' };
+}
+
+// ---------------------------------------------------------------------------
+// Sign-up ticket: a verified Google identity waiting for consent
+// ---------------------------------------------------------------------------
+
+export const GOOGLE_SIGNUP_COOKIE = 'koode_gsignup';
+const SIGNUP_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * A Google account we verified but have no profile for cannot become an
+ * account on the spot: consent has to be shown and accepted first. So the
+ * callback parks the verified identity in a short-lived signed ticket and
+ * sends the browser to a completion screen — the same shape as an OTP
+ * verification ticket, for the same reason. Base64url-wrapped because the
+ * name is user data with arbitrary characters, and signed because the
+ * completion endpoint will mint an account from whatever this says.
+ */
+export function createSignupTicket(identity: GoogleIdentity): string {
+  const payload = Buffer.from(
+    JSON.stringify({ ...identity, exp: Date.now() + SIGNUP_TTL_MS }),
+    'utf8',
+  ).toString('base64url');
+  return `${payload}.${sign(`signup:${payload}`)}`;
+}
+
+export function readSignupTicket(raw: string | undefined): GoogleIdentity | null {
+  if (!raw) return null;
+  const dot = raw.lastIndexOf('.');
+  if (dot < 1) return null;
+
+  const payload = raw.slice(0, dot);
+  const expected = Buffer.from(sign(`signup:${payload}`));
+  const provided = Buffer.from(raw.slice(dot + 1));
+  if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
+      sub?: string;
+      email?: string;
+      name?: string;
+      exp?: number;
+    };
+    if (!parsed.sub || !parsed.email || !parsed.exp || parsed.exp <= Date.now()) return null;
+    return { sub: parsed.sub, email: parsed.email, name: parsed.name ?? '' };
+  } catch {
+    return null;
+  }
 }

@@ -19,7 +19,11 @@ export default async function NewRequirementPage({ params }: PageProps) {
   setRequestLocale(locale);
 
   const person = await getCurrentPerson();
-  if (!person) redirect({ href: '/sign-in', locale });
+  // next-intl's redirect throws but is not typed `never`; narrow explicitly.
+  if (!person) {
+    redirect({ href: '/sign-in', locale });
+    return null;
+  }
 
   // Both lists are fetched here rather than in the form so the pickers are in
   // the first response: the brief asks posting to take under a minute, and a
@@ -29,5 +33,9 @@ export default async function NewRequirementPage({ params }: PageProps) {
     getCategoryGroups(locale),
   ]);
 
-  return <PostRequirementForm localities={localities} categoryGroups={categoryGroups} />;
+  return <PostRequirementForm
+      localities={localities}
+      categoryGroups={categoryGroups}
+      needsContactPhone={!person.hasContactPhone}
+    />;
 }

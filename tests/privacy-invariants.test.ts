@@ -50,6 +50,10 @@ describe('phone numbers never leave the audited path', () => {
     // A person's own data: the masked number on their settings page, and the
     // export, which returns it only to its owner.
     'src/server/services/person.service.ts',
+    // Reads the column solely to derive CurrentPerson.hasContactPhone — the
+    // boolean crosses to the UI, the number does not (the type has no field
+    // for it, which the assertion below continues to enforce).
+    'src/server/auth/session.ts',
   ]);
 
   it('only the listed services select a phone number', () => {

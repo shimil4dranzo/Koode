@@ -50,6 +50,8 @@ export const RATE_LIMITS = {
   interestCreate: { limit: 30, windowSeconds: 24 * 60 * 60 },
   /** Re-sending a claim invitation to somebody who has not responded. */
   claimResend: { limit: 3, windowSeconds: 24 * 60 * 60 },
+  /** Guessing a password. Per-account, on top of the per-IP anonymous cap. */
+  passwordLogin: { limit: 5, windowSeconds: 15 * 60 },
   /** Blunt per-IP ceiling on unauthenticated write endpoints. */
   anonymousWrite: { limit: 30, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, RateLimitRule>;

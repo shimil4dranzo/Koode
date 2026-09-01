@@ -3,13 +3,13 @@ import {
   createHmac,
   randomBytes,
   randomInt,
+  scrypt,
   timingSafeEqual,
 } from 'node:crypto';
 import { env } from '@/server/env';
 
 /**
- * Small, boring crypto helpers. Everything here is standard library — there is
- * no password in this system, so there is no password hash and no bcrypt.
+ * Small, boring crypto helpers, all standard library.
  */
 
 /** URL-safe opaque secret, for session cookies and claim links. */
@@ -67,4 +67,76 @@ export function safeEqual(a: string, b: string): boolean {
   const bufB = Buffer.from(b, 'utf8');
   if (bufA.length !== bufB.length) return false;
   return timingSafeEqual(bufA, bufB);
+}
+
+// ---------------------------------------------------------------------------
+// Passwords
+// ---------------------------------------------------------------------------
+
+/** promisify() loses scrypt's options overload, so the wrapper is manual. */
+function scryptAsync(
+  password: string,
+  salt: Buffer,
+  keylen: number,
+  options: { N: number; r: number; p: number; maxmem: number },
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, keylen, options, (error, derived) =>
+      error ? reject(error) : resolve(derived),
+    );
+  });
+}
+
+/**
+ * scrypt via node's own crypto — memory-hard, standardised, and zero new
+ * dependencies, which on a grant-funded multi-year project beats a native
+ * argon2 binding that must survive every Node upgrade. Parameters are encoded
+ * into the stored string so they can be raised later without invalidating
+ * existing hashes.
+ */
+const SCRYPT_N = 32768;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const SCRYPT_KEYLEN = 64;
+
+export async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16);
+  const derived = await scryptAsync(password, salt, SCRYPT_KEYLEN, {
+    N: SCRYPT_N,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+    maxmem: 128 * SCRYPT_N * SCRYPT_R * 2,
+  });
+
+  return [
+    'scrypt',
+    SCRYPT_N,
+    SCRYPT_R,
+    SCRYPT_P,
+    salt.toString('base64'),
+    derived.toString('base64'),
+  ].join(':');
+}
+
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  const parts = stored.split(':');
+  if (parts.length !== 6 || parts[0] !== 'scrypt') return false;
+
+  const [, nRaw, rRaw, pRaw, saltB64, hashB64] = parts as [
+    string, string, string, string, string, string,
+  ];
+  const N = Number(nRaw);
+  const r = Number(rRaw);
+  const pFactor = Number(pRaw);
+  if (![N, r, pFactor].every((v) => Number.isInteger(v) && v > 0)) return false;
+
+  const expected = Buffer.from(hashB64, 'base64');
+  const derived = await scryptAsync(password, Buffer.from(saltB64, 'base64'), expected.length, {
+    N,
+    r,
+    p: pFactor,
+    maxmem: 128 * N * r * 2,
+  });
+
+  return derived.length === expected.length && timingSafeEqual(derived, expected);
 }

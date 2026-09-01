@@ -16,6 +16,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { createId } from '@paralleldrive/cuid2';
 import { parseMysqlUrl } from '../src/server/db/connection-url.ts';
+import { hashPassword } from '../src/server/crypto.ts';
 import {
   SEED_ADJACENCIES,
   SEED_ANCHOR_ORGS,
@@ -262,6 +263,7 @@ async function seedSamplePeople(
   const people = [
     {
       phone: '+919846000001',
+      email: 'abdul@example.com',
       displayName: 'അബ്ദുൽ റഹ്‌മാൻ',
       headline: 'ഹാർഡ്‌വെയർ കട ഉടമ, കെ.വി.വി.ഇ.എസ്. അംഗം',
       localityId: edakkara,
@@ -270,6 +272,7 @@ async function seedSamplePeople(
     },
     {
       phone: '+919846000002',
+      email: 'suresh@example.com',
       displayName: 'സുരേഷ് കുമാർ',
       headline: 'ഇലക്ട്രീഷ്യൻ, 12 വർഷം പരിചയം',
       localityId: edakkara,
@@ -278,6 +281,7 @@ async function seedSamplePeople(
     },
     {
       phone: '+919846000003',
+      email: 'fathima@example.com',
       displayName: 'ഫാത്തിമ ബീവി',
       headline: 'അക്കൗണ്ടന്റ്, ജി.എസ്.ടി. ഫയലിംഗ്',
       localityId: edakkara,
@@ -286,6 +290,7 @@ async function seedSamplePeople(
     },
     {
       phone: '+919846000004',
+      email: 'rajan@example.com',
       displayName: 'രാജൻ പി.',
       headline: 'ചുമട്ട് തൊഴിലാളി, ദിവസ ജോലി',
       localityId: vazhikkadavu,
@@ -299,6 +304,10 @@ async function seedSamplePeople(
       data: {
         publicId: createId(),
         phone: person.phone,
+        email: person.email,
+        // Development convenience only: lets anyone running the seed sign in
+        // as a sample person. NODE_ENV=production skips sample people wholesale.
+        passwordHash: await hashPassword('koode1234'),
         displayName: person.displayName,
         headline: person.headline,
         localityId: person.localityId,

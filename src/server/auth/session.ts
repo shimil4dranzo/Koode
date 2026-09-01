@@ -40,6 +40,13 @@ export type CurrentPerson = {
   localityId: bigint | null;
   hasVerifiedMembership: boolean;
   /**
+   * Whether a contact number is on file — the boolean only. Posting work
+   * requires one (it is what the reveal shows to candidates), and the form
+   * uses this to know whether to ask. The number itself stays behind the
+   * audited reveal path as ever.
+   */
+  hasContactPhone: boolean;
+  /**
    * Always null, and present only so that a `CurrentPerson` satisfies
    * `PersonFacts` and can be passed straight to the domain rules.
    *
@@ -89,6 +96,7 @@ export const getCurrentPerson = cache(async (): Promise<CurrentPerson | null> =>
           platformRole: true,
           localityId: true,
           anonymizedAt: true,
+          phone: true,
           anchorMemberships: {
             where: { status: 'verified' },
             select: { id: true },
@@ -125,6 +133,7 @@ export const getCurrentPerson = cache(async (): Promise<CurrentPerson | null> =>
     platformRole: person.platformRole as PlatformRole,
     localityId: person.localityId,
     hasVerifiedMembership: person.anchorMemberships.length > 0,
+    hasContactPhone: person.phone !== null,
     anonymizedAt: null,
   };
 });

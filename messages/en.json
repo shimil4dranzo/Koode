@@ -94,7 +94,17 @@
     "googleHint": "Works once you have added Google to your account from your profile.",
     "googleNotLinked": "That Google account is not attached to any Koode profile yet. Sign in with your mobile number first, then add Google from your profile.",
     "googleFailed": "Google sign-in did not complete. Please try again, or use your mobile number.",
-    "accountSuspendedNotice": "This account has been suspended."
+    "accountSuspendedNotice": "This account has been suspended.",
+    "signInEmailSubtitle": "Only employers posting work need an account. Looking for work? Just browse.",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Password",
+    "passwordHelp": "At least 8 characters.",
+    "showPassword": "Show password",
+    "signInAction": "Sign in",
+    "createAccount": "Create account",
+    "noAccountYet": "New here?",
+    "haveAccount": "Already have an account?",
+    "googleCompleteSubtitle": "Signing up with Google as {email}. One more step."
   },
   "consent": {
     "title": "Before you continue",
@@ -157,7 +167,10 @@
       "expired": "Expired"
     },
     "scope": "Search area",
-    "scopeLocal": "My area"
+    "scopeLocal": "My area",
+    "fieldContactPhone": "Contact number for candidates",
+    "fieldContactPhoneHelp": "Shown only when a candidate deliberately asks for it. Saved to your account — you will not be asked again.",
+    "signInToApply": "Sign in to express interest"
   },
   "profile": {
     "title": "Profile",
@@ -400,7 +413,13 @@
     "notFoundTitle": "Page not found",
     "notFoundBody": "That page does not exist.",
     "serverErrorTitle": "Something went wrong",
-    "serverErrorBody": "This is our fault, not yours. Please try again."
+    "serverErrorBody": "This is our fault, not yours. Please try again.",
+    "invalidEmail": "Enter a valid e-mail address.",
+    "passwordTooShort": "The password needs at least 8 characters.",
+    "invalidCredentials": "That e-mail and password do not match.",
+    "emailTaken": "An account with this e-mail already exists.",
+    "phoneTaken": "That contact number is already on another account.",
+    "contactPhoneRequired": "Add a contact number so candidates can reach you."
   },
   "pwa": {
     "installTitle": "Add Koode to your phone",

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { handler, ok } from '@/server/http/respond';
 import { readMeta } from '@/server/http/request';
 import { revealContact } from '@/server/services/requirement.service';
-import { requirePerson } from '@/server/auth/session';
+import { getCurrentPerson } from '@/server/auth/session';
 
 type RouteContext = { params: Promise<{ publicId: string }> };
 
@@ -18,7 +18,9 @@ type RouteContext = { params: Promise<{ publicId: string }> };
  */
 export const POST = handler(async (request: NextRequest, context: RouteContext) => {
   const { publicId } = await context.params;
-  const person = await requirePerson();
+  // Optional on purpose: seekers browse without accounts. Anonymous reveals
+  // are rate-limited per IP and audited with a hashed IP.
+  const person = await getCurrentPerson();
 
   const contact = await revealContact(publicId, person, readMeta(request));
 

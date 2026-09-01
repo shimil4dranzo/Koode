@@ -1,6 +1,13 @@
 import { prisma } from '@/server/db/client';
 import { env } from '@/server/env';
-import { generateOtpCode, hashIp, safeEqual, sha256 } from '@/server/crypto';
+import {
+  generateOtpCode,
+  hashIp,
+  hashPassword,
+  safeEqual,
+  sha256,
+  verifyPassword,
+} from '@/server/crypto';
 import { errors } from '@/server/errors';
 import { maskPhone, phoneLogRef } from '@/server/phone';
 import { enforceRateLimit, resetRateLimit } from '@/server/ratelimit';
@@ -191,32 +198,110 @@ export async function verifyOtp(
   });
 }
 
-export type SignInOutcome =
+export type EmailAuthOutcome =
   | { kind: 'signed_in'; personId: bigint; publicId: string }
-  | { kind: 'needs_registration' }
   | { kind: 'needs_consent'; personId: bigint; publicId: string };
 
 /**
- * Resolve a verified phone number to what should happen next.
+ * Create an account with e-mail and password.
  *
- * Three outcomes, because a phone number can be in three states:
- *  - no Person at all, or one that was anonymised → register
- *  - a Person who has not accepted the current consent version → re-consent
- *  - a Person ready to use the app → sign in
+ * The owner's 2026-09-01 decision replaced phone-first identity with
+ * accounts (e-mail+password or Google); the phone number survives as an
+ * optional, currently unverified contact field captured when somebody first
+ * posts work. Consequences are recorded in ARCHITECTURE.md — including that
+ * there is no password reset until an e-mail provider exists.
  *
- * A `pending_claim` person is a special case handled here rather than by the
- * caller: they exist only because somebody recommended them. Signing in with
- * that number is the strongest possible proof that they are who the referrer
- * said, so it is treated as claiming the profile.
+ * Consent is recorded in the same transaction as the account: an account with
+ * no consent record is one we cannot lawfully justify holding.
  */
-export async function resolveSignIn(phone: string): Promise<SignInOutcome> {
+export async function registerWithPassword(
+  input: {
+    email: string;
+    password: string;
+    displayName: string;
+    localityId: bigint | null;
+    locale: string;
+    consentVersion: string;
+  },
+  meta: RequestMeta,
+): Promise<{ personId: bigint; publicId: string }> {
+  if (input.consentVersion !== CURRENT_CONSENT_VERSION) {
+    throw errors.validation('errors.consentRequired');
+  }
+
+  const email = input.email.trim().toLowerCase();
+  const passwordHash = await hashPassword(input.password);
+  const publicId = newPublicId();
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const created = await tx.person.create({
+        data: {
+          publicId,
+          email,
+          passwordHash,
+          displayName: input.displayName.trim(),
+          localityId: input.localityId,
+          status: 'active',
+          claimedAt: new Date(),
+        },
+        select: { id: true },
+      });
+
+      await tx.consentRecord.create({
+        data: {
+          personId: created.id,
+          consentVersion: input.consentVersion,
+          purpose: 'registration',
+          locale: input.locale,
+          ipHash: hashIp(meta.ip),
+        },
+      });
+
+      await recordAudit(
+        {
+          action: AUDIT_ACTIONS.PERSON_REGISTERED,
+          actorPersonId: created.id,
+          entityType: 'person',
+          entityId: publicId,
+          metadata: { method: 'password', locale: input.locale },
+          context: meta,
+        },
+        tx,
+      );
+
+      return { personId: created.id, publicId };
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) throw errors.conflict('errors.emailTaken');
+    throw error;
+  }
+}
+
+/**
+ * E-mail + password sign-in.
+ *
+ * One failure message for "no such account" and "wrong password", and the
+ * hash is verified even when the account does not exist — otherwise response
+ * timing and wording would let anyone test which e-mails are registered.
+ */
+export async function loginWithPassword(
+  emailRaw: string,
+  password: string,
+  meta: RequestMeta,
+): Promise<EmailAuthOutcome> {
+  const email = emailRaw.trim().toLowerCase();
+  await enforceRateLimit('passwordLogin', sha256(email).slice(0, 32));
+  if (meta.ip) await enforceRateLimit('anonymousWrite', hashIp(meta.ip) ?? 'unknown');
+
   const person = await prisma.person.findUnique({
-    where: { phone },
+    where: { email },
     select: {
       id: true,
       publicId: true,
       status: true,
       anonymizedAt: true,
+      passwordHash: true,
       consents: {
         where: { purpose: 'registration' },
         orderBy: { acceptedAt: 'desc' },
@@ -226,12 +311,25 @@ export async function resolveSignIn(phone: string): Promise<SignInOutcome> {
     },
   });
 
-  // An anonymised row keeps the phone column nulled, so this cannot match one.
-  if (!person) return { kind: 'needs_registration' };
+  const storedHash =
+    person?.passwordHash ??
+    // A constant, valid-format hash of nothing in particular, so the compare
+    // below costs the same whether or not the account exists.
+    'scrypt:32768:8:1:AAAAAAAAAAAAAAAAAAAAAA==:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
-  if (person.status === 'suspended') {
-    throw errors.forbidden('errors.accountSuspended');
+  const passwordOk = await verifyPassword(password, storedHash);
+
+  if (!person || !person.passwordHash || !passwordOk || person.anonymizedAt) {
+    await recordAuditSafely({
+      action: AUDIT_ACTIONS.OTP_FAILED,
+      entityType: 'person',
+      metadata: { method: 'password' },
+      context: meta,
+    });
+    throw errors.validation('errors.invalidCredentials');
   }
+
+  if (person.status !== 'active') throw errors.forbidden('errors.accountSuspended');
 
   const acceptedVersion = person.consents[0]?.consentVersion ?? null;
   if (needsReconsent(acceptedVersion)) {
@@ -241,113 +339,14 @@ export async function resolveSignIn(phone: string): Promise<SignInOutcome> {
   return { kind: 'signed_in', personId: person.id, publicId: person.publicId };
 }
 
-export type RegisterInput = {
-  phone: string;
-  displayName: string;
-  localityId: bigint | null;
-  locale: string;
-  consentVersion: string;
-};
-
-/**
- * Create a self-registered Person, or activate one that was waiting to be
- * claimed, and record consent in the same transaction.
- *
- * Consent and account creation must land together: an account with no consent
- * record is an account we cannot lawfully justify holding.
- */
-export async function registerPerson(
-  input: RegisterInput,
-  meta: RequestMeta,
-): Promise<{ personId: bigint; publicId: string }> {
-  if (input.consentVersion !== CURRENT_CONSENT_VERSION) {
-    throw errors.validation('errors.consentRequired');
-  }
-
-  const displayName = input.displayName.trim();
-  if (displayName.length < 2) throw errors.validation('errors.validationFailed');
-
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.person.findUnique({
-      where: { phone: input.phone },
-      select: { id: true, publicId: true, status: true },
-    });
-
-    let personId: bigint;
-    let publicId: string;
-    let wasPendingClaim = false;
-
-    if (existing) {
-      if (existing.status === 'suspended') {
-        throw errors.forbidden('errors.accountSuspended');
-      }
-
-      wasPendingClaim = existing.status === 'pending_claim';
-      personId = existing.id;
-      publicId = existing.publicId;
-
-      await tx.person.update({
-        where: { id: existing.id },
-        data: {
-          displayName,
-          localityId: input.localityId,
-          status: 'active',
-          // Signing in with the number is the claim. Record when it happened.
-          claimedAt: wasPendingClaim ? new Date() : undefined,
-        },
-      });
-    } else {
-      publicId = newPublicId();
-      const created = await tx.person.create({
-        data: {
-          publicId,
-          phone: input.phone,
-          displayName,
-          localityId: input.localityId,
-          status: 'active',
-          claimedAt: new Date(),
-        },
-        select: { id: true },
-      });
-      personId = created.id;
-    }
-
-    await tx.consentRecord.create({
-      data: {
-        personId,
-        consentVersion: input.consentVersion,
-        purpose: 'registration',
-        locale: input.locale,
-        ipHash: hashIp(meta.ip),
-      },
-    });
-
-    // Any outstanding claim invitations are satisfied by this registration.
-    if (wasPendingClaim) {
-      await tx.claimInvitation.updateMany({
-        where: { personId, status: 'pending' },
-        data: { status: 'claimed', claimedAt: new Date() },
-      });
-    }
-
-    await recordAudit(
-      {
-        action: existing ? AUDIT_ACTIONS.CONSENT_ACCEPTED : AUDIT_ACTIONS.PERSON_REGISTERED,
-        actorPersonId: personId,
-        entityType: 'person',
-        entityId: publicId,
-        metadata: {
-          consentVersion: input.consentVersion,
-          locale: input.locale,
-          claimedPendingProfile: wasPendingClaim,
-        },
-        context: meta,
-      },
-      tx,
-    );
-
-    return { personId, publicId };
-  });
+/** Prisma unique-constraint violation, without importing the error class here. */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'P2002'
+  );
 }
 
 /** Record acceptance of a new consent version by an existing person. */

@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { getCurrentPerson } from '@/server/auth/session';
-import { isGoogleSsoEnabled } from '@/server/auth/google';
+import { cookies } from 'next/headers';
+import {
+  GOOGLE_SIGNUP_COOKIE,
+  isGoogleSsoEnabled,
+  readSignupTicket,
+} from '@/server/auth/google';
 import { getLocalityOptions } from '@/server/services/locality.service';
 import { SignInFlow } from '@/components/auth/sign-in-flow';
 
@@ -37,6 +42,11 @@ export default async function SignInPage({ params, searchParams }: PageProps) {
   const query = await searchParams;
   const requestedError = typeof query.error === 'string' ? query.error : undefined;
 
+  // A Google sign-up ticket set by the OAuth callback jumps this page
+  // straight to the completion step. Read server-side: the cookie is
+  // httpOnly, and only the name and e-mail cross to the client.
+  const ticket = readSignupTicket((await cookies()).get(GOOGLE_SIGNUP_COOKIE)?.value);
+
   // Fetched on the server so the locality list costs no client JavaScript and
   // no extra round trip on a slow connection.
   const localities = await getLocalityOptions(locale).catch(() => []);
@@ -45,6 +55,7 @@ export default async function SignInPage({ params, searchParams }: PageProps) {
     <SignInFlow
       localities={localities}
       googleEnabled={isGoogleSsoEnabled()}
+      googleDraft={ticket ? { name: ticket.name, email: ticket.email } : undefined}
       initialErrorKey={requestedError ? OAUTH_ERROR_KEYS[requestedError] : undefined}
     />
   );

@@ -2,34 +2,34 @@ import type { NextRequest } from 'next/server';
 import { created, handler } from '@/server/http/respond';
 import { readJson, readMeta } from '@/server/http/request';
 import { registerSchema } from '@/server/http/schemas';
-import { registerPerson } from '@/server/services/auth.service';
+import { registerWithPassword } from '@/server/services/auth.service';
 import { createSession } from '@/server/auth/session';
-import {
-  clearVerificationTicket,
-  requireVerifiedPhone,
-} from '@/server/auth/verification-ticket';
 import { resolveLocalityId } from '@/server/services/locality.service';
+import { enforceRateLimit } from '@/server/ratelimit';
+import { hashIp } from '@/server/crypto';
 
 /**
- * POST /api/auth/register — create an account for an already-verified number.
+ * POST /api/auth/register — create an account with e-mail and password.
  *
- * The phone number is taken from the signed verification ticket, never from
- * the request body. Consent is recorded in the same transaction as the
- * account: an account with no consent record is one we cannot lawfully justify
- * holding.
+ * Consent is recorded in the same transaction as the account, and the session
+ * starts immediately: there is no e-mail provider yet, so there is no
+ * verification mail to wait for — a consequence of the identity decision
+ * recorded in ARCHITECTURE.md, alongside the absence of password reset.
  */
 export const POST = handler(async (request: NextRequest) => {
-  const phone = await requireVerifiedPhone();
   const body = await readJson(request, registerSchema);
   const meta = readMeta(request);
+
+  if (meta.ip) await enforceRateLimit('anonymousWrite', hashIp(meta.ip) ?? 'unknown');
 
   const localityId = body.localityPublicId
     ? await resolveLocalityId(body.localityPublicId)
     : null;
 
-  const { personId, publicId } = await registerPerson(
+  const { personId, publicId } = await registerWithPassword(
     {
-      phone,
+      email: body.email,
+      password: body.password,
       displayName: body.displayName,
       localityId,
       locale: body.locale,
@@ -38,7 +38,6 @@ export const POST = handler(async (request: NextRequest) => {
     meta,
   );
 
-  await clearVerificationTicket();
   await createSession(personId, meta);
 
   return created({ status: 'signed_in', person: { publicId } });

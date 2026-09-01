@@ -75,8 +75,9 @@ export default async function RequirementPage({ params }: PageProps) {
   const { locale, publicId } = await params;
   setRequestLocale(locale);
 
-  const [detail, t, tCommon, tAnchor, tInterest, tEngagement, format] = await Promise.all([
+  const [detail, viewer, t, tCommon, tAnchor, tInterest, tEngagement, format] = await Promise.all([
     loadOrNotFound(publicId, locale),
+    getCurrentPerson(),
     getTranslations('requirements'),
     getTranslations('common'),
     getTranslations('anchor'),
@@ -184,10 +185,21 @@ export default async function RequirementPage({ params }: PageProps) {
               requirementPublicId={detail.publicId}
               contactPreference={detail.contactPreference}
             />
-            <ExpressInterest
-              requirementPublicId={detail.publicId}
-              alreadyInterested={detail.viewerHasExpressedInterest}
-            />
+            {viewer ? (
+              <ExpressInterest
+                requirementPublicId={detail.publicId}
+                alreadyInterested={detail.viewerHasExpressedInterest}
+              />
+            ) : (
+              // Revealing needs no account; leaving a named application does.
+              // Say so instead of showing a button that would 401.
+              <Link
+                href="/sign-in"
+                className="inline-flex min-h-touch items-center justify-center rounded-lg border border-ink-300 bg-paper-raised px-4 py-2.5 font-medium hover:bg-ink-100"
+              >
+                {t('signInToApply')}
+              </Link>
+            )}
           </>
         ) : null}
       </div>

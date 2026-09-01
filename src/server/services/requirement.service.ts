@@ -5,6 +5,8 @@ import { newPublicId } from '@/server/ids';
 import { AUDIT_ACTIONS, recordAudit, recordAuditSafely } from '@/server/audit';
 import { enforceRateLimit } from '@/server/ratelimit';
 import { canAct, isContactable } from '@/server/domain/person/rules';
+import { normalizePhone } from '@/server/phone';
+import { hashIp } from '@/server/crypto';
 import {
   assertCanTransition,
   defaultExpiry,
@@ -297,12 +299,20 @@ export type RevealedContact = {
  */
 export async function revealContact(
   publicId: string,
-  viewer: CurrentPerson,
+  viewer: CurrentPerson | null,
   meta: RequestMeta,
 ): Promise<RevealedContact> {
-  if (!canAct(viewer)) throw errors.forbidden();
+  // Seekers browse without an account (owner decision, 2026-09-01), so the
+  // reveal is open to them. The guards shift rather than disappear: a
+  // signed-in viewer is limited per account, an anonymous one per IP address,
+  // and every reveal still lands in the audit log — with a null actor and a
+  // hashed IP when nobody is signed in.
+  if (viewer && !canAct(viewer)) throw errors.forbidden();
 
-  await enforceRateLimit('contactReveal', viewer.publicId);
+  await enforceRateLimit(
+    'contactReveal',
+    viewer ? viewer.publicId : (hashIp(meta.ip) ?? 'anonymous'),
+  );
 
   const row = await prisma.requirement.findUnique({
     where: { publicId },
@@ -345,7 +355,7 @@ export async function revealContact(
   // Recorded before the number goes out, so a reveal cannot happen unlogged.
   await recordAudit({
     action: AUDIT_ACTIONS.CONTACT_REVEALED,
-    actorPersonId: viewer.id,
+    actorPersonId: viewer?.id ?? null,
     entityType: 'requirement',
     entityId: publicId,
     metadata: { employerPublicId: employer.publicId },
@@ -364,6 +374,13 @@ export async function revealContact(
 // ---------------------------------------------------------------------------
 
 export type CreateRequirementInput = {
+  /**
+   * Required the first time a person posts, because the reveal has to have
+   * something to show a candidate. Saved to the profile, so later postings
+   * do not ask again. Unverified since the identity change — recorded as an
+   * accepted consequence in ARCHITECTURE.md.
+   */
+  contactPhone?: string | null | undefined;
   title: string;
   description: string;
   categoryPublicId: string;
@@ -384,6 +401,21 @@ export async function createRequirement(
   if (!canAct(author)) throw errors.forbidden();
 
   await enforceRateLimit('requirementCreate', author.publicId);
+
+  if (!author.hasContactPhone) {
+    const contactPhone = input.contactPhone ? normalizePhone(input.contactPhone) : null;
+    if (!contactPhone) throw errors.validation('errors.contactPhoneRequired');
+
+    try {
+      await prisma.person.update({
+        where: { id: author.id },
+        data: { phone: contactPhone },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) throw errors.conflict('errors.phoneTaken');
+      throw error;
+    }
+  }
 
   const [categoryId, localityId] = await Promise.all([
     resolveCategoryId(input.categoryPublicId),
@@ -602,4 +634,14 @@ export async function expireStaleRequirements(): Promise<number> {
   }
 
   return count;
+}
+
+/** Prisma unique-constraint violation, matched by code to avoid the import. */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'P2002'
+  );
 }

@@ -392,6 +392,38 @@ Pairs are classified by what the rule actually covers:
 
 Adding a new colour pairing to the UI means adding it to that file.
 
+## The 2026-09-01 identity change — an owner decision, recorded
+
+The brief specified phone+OTP as the only identity ("no password anywhere",
+"no email required"). On 2026-09-01 the owner directed otherwise: accounts are
+now e-mail+password or Google, sign-in is required only to post work or hold a
+profile, and seekers browse — including revealing contact numbers — without
+any account.
+
+What that buys and what it costs, so nobody rediscovers this the hard way:
+
+- **Contact numbers are now unverified.** A poster types a number at their
+  first posting; nothing proves they control it. Under phone-OTP identity the
+  reveal always produced a proven-owned number. Accepted consequence.
+- **Anonymous reveals are IP-rate-limited, not account-limited**, and audited
+  with a hashed IP and a null actor. A patient scraper rotating IPs gets more
+  than one with an account would have. Accepted consequence.
+- **No password reset exists.** It needs an e-mail provider, and none has
+  been chosen — the same open decision as SMS. Until then, a forgotten
+  password on a non-Google account means a new account. The UI deliberately
+  offers no dead "forgot password" link.
+- **The claim flow is dormant.** Recommending someone not on Koode notifies
+  them by SMS and authenticates them by OTP; the machinery is kept intact and
+  fully tested behind ALLOW_RECOMMENDING_NON_USERS=false, waiting on an SMS
+  provider — unchanged from before, but now the only place phone-OTP runs.
+- **Google sign-up still collects consent.** The OAuth callback parks the
+  verified identity in a signed ticket and an account exists only after the
+  completion screen's explicit acceptance — DPDP consent cannot be inferred
+  from a redirect. A verified-e-mail match attaches to the existing account
+  instead of minting a duplicate.
+- **Passwords hash with node's built-in scrypt** (parameters encoded per-hash
+  for future raises). No bcrypt/argon2 dependency.
+
 ## Deviations from the brief
 
 | Brief said | What was built | Why |

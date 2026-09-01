@@ -67,14 +67,30 @@ export const verifyOtpSchema = z.object({
   code: otpCodeSchema,
 });
 
-/**
- * The second step of registration.
- *
- * There is no `phone` or `code` here on purpose: the number comes from the
- * signed verification ticket set by /api/auth/verify, so a client cannot
- * register an account for a number it never proved control of.
- */
+export const emailSchema = z.string().trim().toLowerCase().email('errors.invalidEmail').max(255);
+
+/** No composition rules — length is the only requirement that measurably helps. */
+export const passwordSchema = z
+  .string()
+  .min(8, 'errors.passwordTooShort')
+  .max(200, 'errors.validationFailed');
+
 export const registerSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  displayName: displayNameSchema,
+  localityPublicId: publicIdSchema.optional(),
+  locale: localeSchema,
+  consentVersion: z.string().min(1),
+});
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'errors.validationFailed').max(200),
+});
+
+/** Completing a Google sign-up: identity arrives via the signed ticket. */
+export const registerGoogleSchema = z.object({
   displayName: displayNameSchema,
   localityPublicId: publicIdSchema.optional(),
   locale: localeSchema,
@@ -107,6 +123,8 @@ export const personSkillSchema = z.object({
  */
 export const createRequirementSchema = z
   .object({
+    /** Asked only when the poster has no number on file yet. */
+    contactPhone: z.string().trim().max(20).nullish(),
     title: z.string().trim().min(3).max(160),
     description: z.string().trim().max(4000).default(''),
     categoryPublicId: publicIdSchema,

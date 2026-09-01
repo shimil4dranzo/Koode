@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,33 +12,41 @@ import { useApiMessages } from '@/lib/api-messages';
 import type { LocalityOption } from '@/server/services/locality.service';
 
 /**
- * The whole sign-in flow in one Client Component.
+ * Sign in and create account, in one component.
  *
- * Four steps, one component, because they share the phone number and the error
- * plumbing and splitting them across routes would mean either a server round
- * trip between each or passing state through the URL.
+ * Since the owner's identity decision, accounts are e-mail+password or
+ * Google; browsing never needs one — this screen exists for people who post
+ * work or want a profile. Modes:
  *
- *   phone  →  code  →  register (new) or consent (text changed)  →  done
+ *   login            e-mail + password
+ *   register         name, e-mail, password, locality, consent
+ *   google-complete  Google verified the identity; collect name + consent
+ *   consent          the consent text changed since last acceptance
  *
- * There is no multi-step wizard chrome: each step is one field and one button,
- * because the brief is explicit that forms must be short and forgiving.
+ * Passwords currently have no reset flow — that needs an e-mail provider,
+ * which is as unchosen as the SMS one was. The form says nothing about reset
+ * rather than offering a dead link.
  */
 
-type Step = 'phone' | 'code' | 'register' | 'consent';
+type Mode = 'login' | 'register' | 'google-complete' | 'consent';
 
-type VerifyResponse =
+export type GoogleDraft = { name: string; email: string };
+
+type AuthResponse =
   | { status: 'signed_in'; person: { publicId: string } }
-  | { status: 'needs_registration'; consentVersion: string }
   | { status: 'needs_consent'; consentVersion: string };
 
 export function SignInFlow({
   localities,
   googleEnabled,
+  googleDraft,
   initialErrorKey,
 }: {
   localities: LocalityOption[];
   /** True only when the server has Google credentials configured. */
   googleEnabled: boolean;
+  /** Set when a Google sign-up ticket is waiting; jumps straight to completion. */
+  googleDraft?: GoogleDraft;
   /** An auth.* key carried back from an OAuth redirect, if any. */
   initialErrorKey?: string;
 }) {
@@ -49,16 +57,16 @@ export function SignInFlow({
   const locale = useLocale();
   const router = useRouter();
 
-  const [step, setStep] = useState<Step>('phone');
-  const [phone, setPhone] = useState('');
-  const [maskedPhone, setMaskedPhone] = useState('');
-  const [devCode, setDevCode] = useState<string | null>(null);
-  const [code, setCode] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [mode, setMode] = useState<Mode>(googleDraft ? 'google-complete' : 'login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [displayName, setDisplayName] = useState(googleDraft?.name ?? '');
   const [localityPublicId, setLocalityPublicId] = useState('');
   const [consentVersion, setConsentVersion] = useState('');
 
   const [busy, setBusy] = useState(false);
+  const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(() => {
     if (!initialErrorKey) return null;
     try {
@@ -67,27 +75,10 @@ export function SignInFlow({
       return null;
     }
   });
-  const [fieldError, setFieldError] = useState<Record<string, string>>({});
-  const [resendIn, setResendIn] = useState(0);
 
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const timer = setTimeout(() => setResendIn((value) => value - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendIn]);
-
-  /**
-   * Turn any failure into a message in the user's language.
-   *
-   * The server sends a key, never a sentence, so a Malayalam speaker never
-   * sees an English error — the failure case is exactly where that matters
-   * most.
-   */
   function showError(caught: unknown): void {
     if (caught instanceof ApiError) {
       setFieldError(caught.fields);
-      // Send the user to the field that is actually wrong, rather than
-      // leaving focus on the submit button they just pressed.
       if (Object.keys(caught.fields).length > 0) focusFirstInvalid();
     }
     setError(apiMessage(caught));
@@ -106,55 +97,107 @@ export function SignInFlow({
     }
   }
 
-  const sendCode = () =>
-    run(async () => {
-      const result = await api.post<{
-        maskedPhone: string;
-        expiresInSeconds: number;
-        devCode?: string;
-      }>('/api/auth/otp', { phone, purpose: 'login' });
-      setMaskedPhone(result.maskedPhone);
-      setDevCode(result.devCode ?? null);
-      setResendIn(30);
-      setStep('code');
-    });
+  function finish(): void {
+    router.replace('/');
+    router.refresh();
+  }
 
-  const verifyCode = () =>
+  const login = () =>
     run(async () => {
-      const result = await api.post<VerifyResponse>('/api/auth/verify', { phone, code });
-
-      if (result.status === 'signed_in') {
-        router.replace('/');
-        router.refresh();
+      const result = await api.post<AuthResponse>('/api/auth/login', { email, password });
+      if (result.status === 'needs_consent') {
+        setConsentVersion(result.consentVersion);
+        setMode('consent');
         return;
       }
-
-      setConsentVersion(result.consentVersion);
-      setStep(result.status === 'needs_registration' ? 'register' : 'consent');
+      finish();
     });
 
-  const completeRegistration = () =>
+  const register = () =>
     run(async () => {
       await api.post('/api/auth/register', {
+        email,
+        password,
         displayName,
         localityPublicId: localityPublicId || undefined,
         locale,
-        consentVersion,
+        consentVersion: CURRENT_CONSENT_VERSION_CLIENT,
       });
-      router.replace('/');
-      router.refresh();
+      finish();
+    });
+
+  const completeGoogle = () =>
+    run(async () => {
+      await api.post('/api/auth/register-google', {
+        displayName,
+        localityPublicId: localityPublicId || undefined,
+        locale,
+        consentVersion: CURRENT_CONSENT_VERSION_CLIENT,
+      });
+      finish();
     });
 
   const acceptConsent = () =>
     run(async () => {
-      await api.post('/api/auth/consent', { locale, consentVersion });
-      router.replace('/');
-      router.refresh();
+      await api.post('/api/auth/consent', {
+        locale,
+        consentVersion,
+        email,
+        password,
+      });
+      finish();
     });
+
+  const passwordField = (autoComplete: string) => (
+    <div className="flex flex-col gap-1.5">
+      <TextField
+        label={t('passwordLabel')}
+        help={mode === 'register' ? t('passwordHelp') : undefined}
+        error={fieldMessage(fieldError, 'password')}
+        type={showPassword ? 'text' : 'password'}
+        autoComplete={autoComplete}
+        minLength={mode === 'register' ? 8 : undefined}
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        required
+      />
+      <label className="flex min-h-touch w-fit cursor-pointer items-center gap-2 text-sm text-ink-700">
+        <input
+          type="checkbox"
+          checked={showPassword}
+          onChange={(event) => setShowPassword(event.target.checked)}
+          className="size-4 rounded border border-ink-300"
+        />
+        {t('showPassword')}
+      </label>
+    </div>
+  );
+
+  const googleButton = googleEnabled ? (
+    <>
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-ink-200" />
+        <span className="text-sm text-ink-500">{tCommon('or')}</span>
+        <span className="h-px flex-1 bg-ink-200" />
+      </div>
+      {/* A full-page redirect, not a popup: popups die under mobile browsers'
+          blockers. A raw anchor because the route answers with a 302 to
+          Google, which client navigation cannot follow. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a
+        href="/api/auth/google/start?mode=login"
+        className="inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border border-ink-300 bg-paper-raised px-6 text-lg font-medium hover:bg-ink-100"
+      >
+        <GoogleGlyph />
+        {t('continueWithGoogle')}
+      </a>
+    </>
+  ) : null;
 
   return (
     <div className="relative mx-auto w-full max-w-md px-4 py-8">
       <PageGlow />
+
       {error ? (
         <p
           role="alert"
@@ -164,146 +207,137 @@ export function SignInFlow({
         </p>
       ) : null}
 
-      {step === 'phone' ? (
+      {mode === 'login' ? (
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            void sendCode();
+            void login();
           }}
           className="flex flex-col gap-5"
         >
           <div>
             <LogoMark className="mb-4 size-12" />
             <h1 className="text-2xl font-semibold">{t('signInTitle')}</h1>
-            <p className="mt-2 text-ink-700">{t('signInSubtitle')}</p>
+            <p className="mt-2 text-ink-700">{t('signInEmailSubtitle')}</p>
           </div>
 
           <TextField
-            label={t('phoneLabel')}
-            help={t('phoneHelp')}
-            error={fieldMessage(fieldError, 'phone')}
-            // type="tel" + numeric inputmode brings up the phone keypad, and
-            // autocomplete lets the browser fill a saved number.
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
-            // Deliberately permissive: it catches letters or an obviously
-            // short number without a round trip, and cannot reject a spelling
-            // the server would accept. A stricter client pattern would have
-            // to restate normalizePhone's rules, and the day the two drift a
-            // user is locked out of their own number.
-            pattern="[0-9+()\s-]{10,17}"
-            maxLength={17}
-            placeholder={t('phonePlaceholder')}
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            label={t('emailLabel')}
+            error={fieldMessage(fieldError, 'email')}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             required
             autoFocus
           />
 
+          {passwordField('current-password')}
+
           <Button type="submit" size="lg" busy={busy}>
-            {t('sendCode')}
+            {t('signInAction')}
           </Button>
 
-          {googleEnabled ? (
-            <>
-              <div className="flex items-center gap-3" aria-hidden="true">
-                <span className="h-px flex-1 bg-ink-200" />
-                <span className="text-sm text-ink-500">{tCommon('or')}</span>
-                <span className="h-px flex-1 bg-ink-200" />
-              </div>
+          {googleButton}
 
-              {/* A full-page redirect, not a popup: popups die under mobile
-                  browsers' blockers, and this is a phone-first product. A raw
-                  anchor on purpose — the route answers with a 302 to Google,
-                  which next/link's client navigation cannot follow. */}
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a
-                href="/api/auth/google/start?mode=login"
-                className="inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border border-ink-300 bg-paper-raised px-6 text-lg font-medium hover:bg-ink-100"
-              >
-                <GoogleGlyph />
-                {t('continueWithGoogle')}
-              </a>
-              <p className="text-sm text-ink-700">{t('googleHint')}</p>
-            </>
-          ) : null}
+          <p className="text-center text-ink-700">
+            {t('noAccountYet')}{' '}
+            <button
+              type="button"
+              onClick={() => setMode('register')}
+              className="min-h-touch font-medium text-brand-700 underline underline-offset-2"
+            >
+              {t('createAccount')}
+            </button>
+          </p>
         </form>
       ) : null}
 
-      {step === 'code' ? (
+      {mode === 'register' ? (
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            void verifyCode();
+            void register();
           }}
           className="flex flex-col gap-5"
         >
           <div>
-            <h1 className="text-2xl font-semibold">{t('otpTitle')}</h1>
-            <p className="mt-2 text-ink-700">{t('otpSubtitle', { phone: maskedPhone })}</p>
-            {devCode ? (
-              // Development only: the server includes the code solely when it
-              // is running a dev build with the console SMS stub, where no
-              // message is actually delivered anywhere.
-              <p className="mt-3 rounded-lg border border-warn-600 bg-warn-100 px-3 py-2 text-sm">
-                {t('devCodeNotice')}{' '}
-                <strong className="font-mono text-base tracking-widest">{devCode}</strong>
-              </p>
-            ) : null}
+            <LogoMark className="mb-4 size-12" />
+            <h1 className="text-2xl font-semibold">{t('createAccount')}</h1>
           </div>
 
           <TextField
-            label={t('otpLabel')}
-            error={fieldMessage(fieldError, 'code')}
-            type="text"
-            inputMode="numeric"
-            // Lets Android and iOS offer the code straight from the SMS.
-            autoComplete="one-time-code"
-            maxLength={6}
-            pattern="\d{6}"
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+            label={t('nameLabel')}
+            error={fieldMessage(fieldError, 'displayName')}
+            placeholder={t('namePlaceholder')}
+            autoComplete="name"
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
             required
             autoFocus
-            className="text-center text-2xl tracking-[0.4em]"
           />
 
+          <TextField
+            label={t('emailLabel')}
+            error={fieldMessage(fieldError, 'email')}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+
+          {passwordField('new-password')}
+
+          <SelectField
+            label={t('localityLabel')}
+            placeholder={tCommon('none')}
+            options={localities.map((locality) => ({
+              value: locality.publicId,
+              label: locality.label,
+            }))}
+            value={localityPublicId}
+            onChange={(event) => setLocalityPublicId(event.target.value)}
+          />
+
+          <ConsentNotice />
+
           <Button type="submit" size="lg" busy={busy}>
-            {t('verify')}
+            {tConsent('accept')}
           </Button>
 
-          <div className="flex flex-col gap-2 text-center">
-            <Button
-              variant="quiet"
-              disabled={resendIn > 0 || busy}
-              onClick={() => void sendCode()}
+          {googleButton}
+
+          <p className="text-center text-ink-700">
+            {t('haveAccount')}{' '}
+            <button
+              type="button"
+              onClick={() => setMode('login')}
+              className="min-h-touch font-medium text-brand-700 underline underline-offset-2"
             >
-              {resendIn > 0 ? t('resendIn', { seconds: resendIn }) : t('resend')}
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={() => {
-                setStep('phone');
-                setCode('');
-                setError(null);
-              }}
-            >
-              {t('changeNumber')}
-            </Button>
-          </div>
+              {t('signInAction')}
+            </button>
+          </p>
         </form>
       ) : null}
 
-      {step === 'register' ? (
+      {mode === 'google-complete' && googleDraft ? (
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            void completeRegistration();
+            void completeGoogle();
           }}
           className="flex flex-col gap-5"
         >
-          <h1 className="text-2xl font-semibold">{t('completeProfile')}</h1>
+          <div>
+            <LogoMark className="mb-4 size-12" />
+            <h1 className="text-2xl font-semibold">{t('completeProfile')}</h1>
+            <p className="mt-2 text-ink-700">
+              {t('googleCompleteSubtitle', { email: googleDraft.email })}
+            </p>
+          </div>
 
           <TextField
             label={t('nameLabel')}
@@ -335,7 +369,7 @@ export function SignInFlow({
         </form>
       ) : null}
 
-      {step === 'consent' ? (
+      {mode === 'consent' ? (
         <div className="flex flex-col gap-5">
           <h1 className="text-2xl font-semibold">{tConsent('title')}</h1>
           <ConsentNotice />
@@ -349,11 +383,16 @@ export function SignInFlow({
 }
 
 /**
- * The consent text.
- *
- * Rendered from the same message keys that `CONSENT_VERSIONS` records, so what
- * a person saw can be reproduced from the stored version years later. A unit
- * test asserts every referenced key exists in both languages.
+ * The current consent version, mirrored for the client bundle. The server
+ * rejects any other value, so drift between the two constants fails loudly at
+ * the first registration attempt instead of silently recording the wrong
+ * version. Bump together with src/server/consent/versions.ts.
+ */
+const CURRENT_CONSENT_VERSION_CLIENT = '2026-09-01.1';
+
+/**
+ * The consent text, rendered from the same keys `CONSENT_VERSIONS` records so
+ * what a person saw is reproducible from the stored version years later.
  */
 function ConsentNotice() {
   const t = useTranslations('consent');
@@ -371,10 +410,7 @@ function ConsentNotice() {
   );
 }
 
-/**
- * Google's "G", drawn to their brand spec colours. Decorative — the button
- * label carries the meaning.
- */
+/** Google's "G", to brand spec. Decorative — the label carries the meaning. */
 function GoogleGlyph() {
   return (
     <svg viewBox="0 0 24 24" className="size-5.5" aria-hidden="true">

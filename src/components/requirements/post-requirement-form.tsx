@@ -32,9 +32,12 @@ import type { LocalityOption } from '@/server/services/locality.service';
 export function PostRequirementForm({
   localities,
   categoryGroups,
+  needsContactPhone,
 }: {
   localities: LocalityOption[];
   categoryGroups: CategoryGroup[];
+  /** True when the poster has no number on file yet — the field shows once. */
+  needsContactPhone: boolean;
 }) {
   const t = useTranslations('requirements');
   const tCommon = useTranslations('common');
@@ -98,6 +101,7 @@ export function PostRequirementForm({
 
     try {
       const result = await api.post<{ publicId: string }>('/api/requirements', {
+        contactPhone: text('contactPhone') || null,
         title: text('title'),
         categoryPublicId: text('categoryPublicId'),
         localityPublicId: text('localityPublicId'),
@@ -137,6 +141,24 @@ export function PostRequirementForm({
       ) : null}
 
       <div className="mt-6 flex flex-col gap-5">
+        {needsContactPhone ? (
+          // Candidates reach an employer by phone, so the first posting has
+          // to put a number on file. Asked once, saved to the profile,
+          // never shown anywhere except the audited reveal.
+          <TextField
+            label={t('fieldContactPhone')}
+            help={t('fieldContactPhoneHelp')}
+            name="contactPhone"
+            error={fieldMessage('contactPhone')}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            pattern="[0-9+()\s-]{10,17}"
+            maxLength={17}
+            required
+          />
+        ) : null}
+
         <TextField
           label={t('fieldTitle')}
           name="title"

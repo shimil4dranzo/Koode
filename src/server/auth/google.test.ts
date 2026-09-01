@@ -58,9 +58,10 @@ describe('id_token claims', () => {
   };
 
   it('accepts a token issued by Google for this app', () => {
-    expect(assertValidClaims(valid, CLIENT_ID)).toEqual({
+    expect(assertValidClaims({ ...valid, name: 'Suresh Kumar' }, CLIENT_ID)).toEqual({
       sub: 'google-sub-123',
       email: 'person@example.com',
+      name: 'Suresh Kumar',
     });
   });
 
@@ -93,7 +94,7 @@ describe('authorization URL', () => {
     expect(url.searchParams.get('state')).toBe('the-state');
     // Minimal scope, and always the account chooser — on a shared phone,
     // silently reusing the last Google session attaches the wrong account.
-    expect(url.searchParams.get('scope')).toBe('openid email');
+    expect(url.searchParams.get('scope')).toBe('openid email profile');
     expect(url.searchParams.get('prompt')).toBe('select_account');
     expect(url.searchParams.get('redirect_uri')).toContain('/api/auth/google/callback');
   });

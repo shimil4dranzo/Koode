@@ -105,7 +105,16 @@ contact reveal and duplicate detection all depend on it — so a Google account
 can only ever be attached to an existing phone-verified profile, from the
 profile page. It can never register.
 
-### 9. Replace the consent text
+### 9. Know the password-reset gap
+
+Accounts are e-mail+password or Google. There is NO password reset — it needs
+an e-mail provider nobody has chosen. Until one exists, a person who forgets a
+non-Google password needs an admin to hear about it (no self-service exists,
+deliberately: a reset flow that silently fails is worse than none). Choosing
+an e-mail provider closes this; wire it the way SMS is wired, behind an
+interface with the console stub for development.
+
+### 10. Replace the consent text
 
 `src/server/consent/versions.ts` currently references placeholder copy written
 by the engineering team. It describes the system accurately but has not been
@@ -113,7 +122,7 @@ reviewed for DPDP Act 2023 compliance. Replace it, add a new version entry, and
 bump `CURRENT_CONSENT_VERSION` — never edit a published version, because
 existing records point at it.
 
-### 10. Verify the checklist
+### 11. Verify the checklist
 
 ```bash
 npm run db:check
