@@ -28,6 +28,8 @@ export type CategoryRef = {
 export type CategoryGroup = {
   /** The tier. */
   publicId: string;
+  /** Seed slug ('skilled-trades' …) — stable across languages, used to pick icons. */
+  slug: string;
   label: string;
   roles: Array<{ publicId: string; label: string }>;
 };
@@ -96,6 +98,7 @@ export async function getCategoryGroups(locale: string): Promise<CategoryGroup[]
 
   return tiers.map((tier) => ({
     publicId: tier.publicId,
+    slug: tier.slug,
     label: categoryLabel(tier, locale),
     roles: all
       .filter((category) => category.level === 'role' && category.parentPublicId === tier.publicId)

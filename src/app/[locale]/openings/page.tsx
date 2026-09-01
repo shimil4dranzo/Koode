@@ -6,7 +6,7 @@ import { Card, EmptyState } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
 import { PayRange } from '@/components/requirements/pay-range';
 import { OpeningsFilter } from '@/components/requirements/openings-filter';
-import { getCategoryOptions } from '@/server/services/category.service';
+import { getCategoryGroups } from '@/server/services/category.service';
 import {
   SEARCH_SCOPES,
   getLocalityOptionsByScope,
@@ -49,7 +49,7 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [query, t, tCommon, tAnchor, tEngagement, tLevel, localitiesByScope, categories] =
+  const [query, t, tCommon, tAnchor, tEngagement, tLevel, localitiesByScope, categoryGroups] =
     await Promise.all([
       searchParams,
       getTranslations('requirements'),
@@ -58,8 +58,22 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
       getTranslations('taxonomy.engagementType'),
       getTranslations('taxonomy.localityLevel'),
       getLocalityOptionsByScope(locale),
-      getCategoryOptions(locale),
+      getCategoryGroups(locale),
     ]);
+
+  /**
+   * A tier is a legal filter, not just its roles: the home page's four tier
+   * cards link here with the tier's id, and searchRequirements already
+   * expands a tier to every role inside it. The tier appears as the group's
+   * first option ("the whole of Skilled trades"), then its roles.
+   */
+  const categories = categoryGroups.flatMap((group) => [
+    { value: group.publicId, label: group.label },
+    ...group.roles.map((role) => ({
+      value: role.publicId,
+      label: `${group.label} · ${role.label}`,
+    })),
+  ]);
 
   /**
    * A public id that is not in a picker is dropped rather than passed on.
@@ -107,7 +121,7 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
   });
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl px-4 py-8">
+    <div className="relative mx-auto w-full max-w-6xl px-4 py-8">
       <PageGlow />
       <h1 className="text-2xl font-semibold sm:text-3xl">{t('listTitle')}</h1>
 
@@ -164,16 +178,16 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
           />
         </div>
       ) : (
-        <ol className="mt-3 flex flex-col gap-3">
+        <ol className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <Card
               key={item.publicId}
               as="li"
-              className="transition-colors hover:border-brand-600"
+              className="h-full transition-colors hover:border-brand-600"
             >
               <Link
                 href={`/openings/${item.publicId}`}
-                className="flex min-h-touch flex-col gap-2"
+                className="flex h-full min-h-touch flex-col gap-2"
               >
                 <h2 className="text-lg font-medium">{item.title}</h2>
 

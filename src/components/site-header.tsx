@@ -27,19 +27,23 @@ export async function SiteHeader() {
         360px. Wrapping is the fix rather than shrinking the text, because
         these labels are already at the minimum comfortable reading size.
       */}
-      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <Link href="/" className="flex items-center gap-2.5">
           <LogoMark className="size-9" />
           <span className="text-xl font-semibold text-brand-700">{tApp('name')}</span>
         </Link>
 
-        <div className="ms-auto">
+        {/* Mobile: switcher shares the first row with the logo and the nav
+            wraps beneath. Desktop: one row, logo left, nav pushed right,
+            switcher last — the order-first trick from before the logo existed
+            was parking the brand in the middle of the bar. */}
+        <div className="ms-auto sm:order-2 sm:ms-0">
           <LanguageSwitcher />
         </div>
 
         <nav
           aria-label={tNav('menu')}
-          className="flex w-full items-center gap-1 sm:w-auto sm:order-first sm:ms-auto"
+          className="flex w-full items-center gap-1 sm:order-1 sm:ms-auto sm:w-auto"
         >
           <NavLink href="/openings">{tNav('openings')}</NavLink>
 

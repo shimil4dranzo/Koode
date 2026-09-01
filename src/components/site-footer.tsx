@@ -7,7 +7,7 @@ export async function SiteFooter() {
 
   return (
     <footer className="mt-10 border-t border-ink-200 bg-paper-raised">
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 text-sm text-ink-700">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 text-sm text-ink-700">
         <p className="flex items-center gap-2 font-medium text-ink-900">
           <LogoMark className="size-6" />
           {t('tagline')}

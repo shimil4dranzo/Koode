@@ -56,7 +56,17 @@
     "step3Body": "When a shop or firm nearby needs someone, they can see who vouched for you and what they said.",
     "statOpenings": "Open requirements",
     "statPeople": "People on Koode",
-    "statRecommendations": "Recommendations recorded"
+    "statRecommendations": "Recommendations recorded",
+    "vouchPanelTitle": "Latest on the record",
+    "latestTitle": "Fresh openings",
+    "viewAll": "See all openings",
+    "tiersTitle": "Every kind of work",
+    "tiersBody": "A loading worker and a chartered accountant get the same profile, the same recommendations, the same respect.",
+    "trustTitle": "Backed by people who can be asked",
+    "trustBody": "Every recommendation carries a real name, and members verified by KVVES Edakkara carry a badge their neighbours can check. Nothing here is an anonymous star rating.",
+    "ctaTitle": "Start with just your phone number",
+    "ctaBody": "No resume, no email, no fees. One code by SMS and you are in.",
+    "ctaAction": "Get started"
   },
   "auth": {
     "signInTitle": "Sign in to Koode",

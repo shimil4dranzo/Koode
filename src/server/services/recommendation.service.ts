@@ -399,6 +399,69 @@ export async function listRecommendationsFor(
   }));
 }
 
+export type FeaturedVouch = {
+  note: string;
+  createdAt: string;
+  referrerName: string;
+  referrerIsVerifiedMember: boolean;
+  subjectName: string;
+  subjectPublicId: string;
+  categoryLabel: string | null;
+};
+
+/**
+ * The freshest vouches, for the home page.
+ *
+ * The landing page's job is to show what Koode actually is, and what it is is
+ * this: a named person's word about somebody, on the record. Real rows, never
+ * marketing copy — which also means the section simply disappears while the
+ * platform is too young to have any, which is more honest than a placeholder.
+ *
+ * Only fully public edges qualify: active recommendation, active claimed
+ * subject, no anonymised party. No phone numbers are anywhere near this query.
+ */
+export async function getFeaturedVouches(
+  limit: number,
+  locale: string,
+): Promise<FeaturedVouch[]> {
+  const rows = await prisma.recommendation.findMany({
+    where: {
+      status: 'active',
+      hiddenAt: null,
+      subject: { status: 'active', anonymizedAt: null },
+      referrer: { anonymizedAt: null },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      note: true,
+      createdAt: true,
+      category: { select: { nameEn: true, nameMl: true } },
+      subject: { select: { publicId: true, displayName: true } },
+      referrer: {
+        select: {
+          displayName: true,
+          anchorMemberships: {
+            where: { status: 'verified' },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  return rows.map((row) => ({
+    note: row.note,
+    createdAt: row.createdAt.toISOString(),
+    referrerName: row.referrer.displayName,
+    referrerIsVerifiedMember: row.referrer.anchorMemberships.length > 0,
+    subjectName: row.subject.displayName,
+    subjectPublicId: row.subject.publicId,
+    categoryLabel: row.category ? categoryLabel(row.category, locale) : null,
+  }));
+}
+
 /** Recommendations this person has written, for their own profile page. */
 export async function listRecommendationsBy(
   referrerId: bigint,
