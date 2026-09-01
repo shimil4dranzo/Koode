@@ -146,18 +146,26 @@ export default async function RequirementPage({ params }: PageProps) {
       <div className="mt-8 flex flex-col gap-3">
         {detail.isOwner ? (
           <>
+            {/* The owner's next step is reading who raised their hand, so this
+                is the screen's one primary control. */}
             <Link
               href={`/openings/${detail.publicId}/interest`}
-              className="inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-ink-300 bg-paper-raised px-4 py-2.5 font-medium hover:bg-ink-100"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-lg font-medium text-white hover:bg-brand-700"
             >
               {tInterest('title')}
               <span className="tabular-nums">{detail.interestCount}</span>
             </Link>
 
             {isOpen ? (
-              <form action={closeRequirement}>
+              // Destructive, so it lives below a rule at ordinary size — never
+              // the same weight, width and position as the primary action,
+              // where a thumb aiming for one lands on the other.
+              <form
+                action={closeRequirement}
+                className="mt-3 border-t border-ink-200 pt-4"
+              >
                 <input type="hidden" name="publicId" value={detail.publicId} />
-                <Button type="submit" variant="danger" size="lg">
+                <Button type="submit" variant="danger">
                   {t('close')}
                 </Button>
               </form>

@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { LogoMark } from '@/components/logo';
+import { NavLink } from '@/components/nav-link';
 import { getCurrentPerson } from '@/server/auth/session';
 
 /**
@@ -40,27 +41,14 @@ export async function SiteHeader() {
           aria-label={tNav('menu')}
           className="flex w-full items-center gap-1 sm:w-auto sm:order-first sm:ms-auto"
         >
-          <Link
-            href="/openings"
-            className="inline-flex min-h-touch items-center rounded-lg px-3 py-2 text-base hover:bg-ink-100"
-          >
-            {tNav('openings')}
-          </Link>
+          <NavLink href="/openings">{tNav('openings')}</NavLink>
 
           {person ? (
-            <Link
-              href="/profile"
-              className="inline-flex min-h-touch items-center rounded-lg px-3 py-2 text-base hover:bg-ink-100"
-            >
-              {tNav('profile')}
-            </Link>
+            <NavLink href="/profile">{tNav('profile')}</NavLink>
           ) : (
-            <Link
-              href="/sign-in"
-              className="inline-flex min-h-touch items-center rounded-lg px-3 py-2 text-base font-medium text-brand-700 hover:bg-ink-100"
-            >
+            <NavLink href="/sign-in" emphasis>
               {tNav('signIn')}
-            </Link>
+            </NavLink>
           )}
         </nav>
       </div>
