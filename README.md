@@ -62,12 +62,31 @@ DATABASE_URL="mysql://root:koode_local_dev@127.0.0.1:3306/Koode"
 
 ### Start the database
 
+With Docker (preferred — it pins the MySQL version, charset, collation and
+`lower_case_table_names` to match the deployment target):
+
 ```bash
 docker compose up -d
 ```
 
-This starts MySQL 8.4 and Redis, with the charset, collation and
-`lower_case_table_names` settings the app requires already pinned.
+Without Docker, on macOS:
+
+```bash
+brew install mysql && brew services start mysql
+```
+
+```bash
+mysql -u root -e "CREATE DATABASE \`Koode\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+```
+
+> Homebrew's `mysql` formula tracks MySQL's innovation releases, so it installs
+> something well past the 8.4 LTS that `docker-compose.yml` and the deployment
+> target pin. It works, and `npm run db:check` confirms the collation exists —
+> but you are then developing against a different major version from the
+> server. Prefer Docker where you can.
+
+Redis is optional in development: without `REDIS_URL` the rate limiter falls
+back to an in-process one. Production refuses to start without it.
 
 ### Create the schema and seed it
 
@@ -121,7 +140,7 @@ this provider.
 | `npm run build` | Production build |
 | `npm run verify` | Typecheck, lint, migration charset check, unit tests |
 | `npm test` | Unit tests |
-| `npm run test:integration` | Integration tests (needs `TEST_DATABASE_URL`) |
+| `npm run test:integration` | Integration tests against real MySQL (see below) |
 | `npm run test:e2e` | Playwright end-to-end tests |
 | `npm run db:migrate` | Create and apply a migration, then normalise its collation |
 | `npm run db:deploy` | Apply existing migrations (use this in deployment) |
@@ -129,6 +148,25 @@ this provider.
 | `npm run db:check` | Verify charset, collation and Malayalam round trip |
 | `npm run db:studio` | Browse the database |
 | `npm run bundle:report` | Print client JavaScript size against the budget |
+
+### Running the integration tests
+
+They need their own database, because they truncate every table between tests:
+
+```bash
+mysql -u root -p -e "CREATE DATABASE \`Koode_test\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+```
+
+```bash
+DATABASE_URL="mysql://root:PASSWORD@127.0.0.1:3306/Koode_test" npx prisma migrate deploy
+```
+
+```bash
+TEST_DATABASE_URL="mysql://root:PASSWORD@127.0.0.1:3306/Koode_test" npm run test:integration
+```
+
+Without `TEST_DATABASE_URL` they skip with a message rather than failing, so
+`npm run verify` still works on a laptop with no database.
 
 ### After changing `prisma/schema.prisma`
 

@@ -9,7 +9,7 @@
  * reads the page. Checking with an English placeholder would prove nothing,
  * so this writes and reads back real Malayalam.
  */
-import 'dotenv/config';
+import './load-env.ts';
 import mariadb from 'mariadb';
 import { parseMysqlUrl } from '../src/server/db/connection-url.ts';
 
@@ -81,10 +81,18 @@ async function main(): Promise<void> {
     }
 
     // Any table that slipped through with the wrong collation.
+    //
+    // `_prisma_migrations` is excluded: the Prisma CLI creates it with its own
+    // hardcoded collation, it holds nothing but ASCII migration names and
+    // checksums, and we cannot change it. Failing on a table we do not own and
+    // that carries no user data would be a standing false alarm, and a check
+    // that cries wolf is one people learn to ignore.
     const badTables = (await connection.query(
       `SELECT TABLE_NAME AS name, TABLE_COLLATION AS collation
          FROM information_schema.TABLES
-        WHERE TABLE_SCHEMA = ? AND TABLE_COLLATION <> 'utf8mb4_0900_ai_ci'`,
+        WHERE TABLE_SCHEMA = ?
+          AND TABLE_NAME <> '_prisma_migrations'
+          AND TABLE_COLLATION <> 'utf8mb4_0900_ai_ci'`,
       [config.database],
     )) as Row[];
 

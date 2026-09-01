@@ -11,7 +11,7 @@
  * Sample people, requirements and recommendations are DEVELOPMENT ONLY and are
  * skipped entirely when NODE_ENV=production.
  */
-import 'dotenv/config';
+import '../scripts/load-env.ts';
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { createId } from '@paralleldrive/cuid2';
@@ -256,6 +256,9 @@ async function seedSamplePeople(
     throw new Error('Expected Edakkara and Vazhikkadavu in the seeded localities');
   }
 
+  /** Phone → internal id, so the activity seeder can wire people together. */
+  const createdIds = new Map<string, bigint>();
+
   const people = [
     {
       phone: '+919846000001',
@@ -331,9 +334,178 @@ async function seedSamplePeople(
         },
       });
     }
+
+    createdIds.set(person.phone, created.id);
   }
 
   console.log(`  sample data  : ${people.length} people across all four tiers`);
+
+  await seedSampleActivity(createdIds, localityIds, categoryIds);
+}
+
+/**
+ * Sample requirements, recommendations and interest.
+ *
+ * Without these the app runs but shows nothing: a seeded database with people
+ * and no postings looks broken to anyone opening it for the first time, and
+ * the recommendation graph — the thing this product is actually about — is
+ * invisible. Development only, guarded by the same checks as the sample people.
+ */
+async function seedSampleActivity(
+  peopleByPhone: Map<string, bigint>,
+  localityIds: KeyMap,
+  categoryIds: Map<string, bigint>,
+): Promise<void> {
+  const shopOwner = peopleByPhone.get('+919846000001');
+  const electrician = peopleByPhone.get('+919846000002');
+  const accountant = peopleByPhone.get('+919846000003');
+  const loader = peopleByPhone.get('+919846000004');
+
+  const edakkara = localityIds.get('kl-mpm-nilambur-edakkara');
+  const vazhikkadavu = localityIds.get('kl-mpm-nilambur-vazhikkadavu');
+
+  if (
+    shopOwner === undefined ||
+    electrician === undefined ||
+    accountant === undefined ||
+    loader === undefined ||
+    edakkara === undefined ||
+    vazhikkadavu === undefined
+  ) {
+    console.warn('  activity     : skipped (expected sample people or localities missing)');
+    return;
+  }
+
+  const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  // Deliberately spans the tiers: counter staff, an electrician and an
+  // accountant, so the taxonomy's claim that they are the same shape of record
+  // is visible on the listing page rather than only in the schema.
+  const requirements = [
+    {
+      title: 'ഹാർഡ്‌വെയർ കടയിൽ കൗണ്ടർ ജീവനക്കാരൻ',
+      description:
+        'രാവിലെ 9 മുതൽ വൈകിട്ട് 7 വരെ. ബില്ലിംഗ് അറിയണം. മലയാളം എഴുതാനും വായിക്കാനും അറിയണം.',
+      categorySlug: 'sales-counter-staff',
+      localityId: edakkara,
+      engagementType: 'permanent',
+      payMin: 12000,
+      payMax: 15000,
+      payPeriod: 'monthly',
+      vacancies: 1,
+    },
+    {
+      title: 'വീട്ടിലെ വയറിംഗ് ജോലിക്ക് ഇലക്ട്രീഷ്യൻ',
+      description: 'പുതിയ വീട്, രണ്ട് നില. ഏകദേശം 10 ദിവസത്തെ ജോലി.',
+      categorySlug: 'electrician',
+      localityId: edakkara,
+      engagementType: 'contract',
+      payMin: 1200,
+      payMax: null,
+      payPeriod: 'daily',
+      vacancies: 2,
+    },
+    {
+      title: 'ജി.എസ്.ടി. ഫയലിംഗിന് അക്കൗണ്ടന്റ്',
+      description: 'മാസത്തിൽ കുറച്ച് ദിവസം മതി. ടാലി അറിയുന്നവർ അഭികാമ്യം.',
+      categorySlug: 'accountant',
+      localityId: vazhikkadavu,
+      engagementType: 'part_time',
+      payMin: null,
+      payMax: null,
+      payPeriod: null,
+      vacancies: 1,
+    },
+  ];
+
+  let posted = 0;
+  for (const requirement of requirements) {
+    const categoryId = categoryIds.get(requirement.categorySlug);
+    if (categoryId === undefined) continue;
+
+    await prisma.requirement.create({
+      data: {
+        publicId: createId(),
+        postedByPersonId: shopOwner,
+        title: requirement.title,
+        description: requirement.description,
+        categoryId,
+        localityId: requirement.localityId,
+        engagementType: requirement.engagementType,
+        payMin: requirement.payMin,
+        payMax: requirement.payMax,
+        payPeriod: requirement.payPeriod,
+        contactPreference: 'call',
+        vacancies: requirement.vacancies,
+        status: 'open',
+        expiresAt: in30Days,
+      },
+    });
+    posted += 1;
+  }
+
+  // The point of the product: attributable vouches from a named member.
+  const recommendations = [
+    {
+      subject: electrician,
+      note: 'എന്റെ കടയിലെ വയറിംഗ് മുഴുവൻ ചെയ്തത് ഇദ്ദേഹമാണ്. വൃത്തിയായ പണി, പറഞ്ഞ സമയത്ത് തീർത്തു.',
+      relationshipContext: 'hired_for_a_job',
+      categorySlug: 'electrician',
+    },
+    {
+      subject: accountant,
+      note: 'മൂന്ന് വർഷമായി ഞങ്ങളുടെ കടയുടെ ജി.എസ്.ടി. ഫയലിംഗ് ചെയ്യുന്നു. ഒരു തവണ പോലും വൈകിയിട്ടില്ല.',
+      relationshipContext: 'employed_them',
+      categorySlug: 'accountant',
+    },
+    {
+      subject: loader,
+      note: 'ചരക്ക് ഇറക്കാൻ സ്ഥിരമായി വിളിക്കാറുണ്ട്. നല്ല അധ്വാനി, വിശ്വസിക്കാം.',
+      relationshipContext: 'hired_for_a_job',
+      categorySlug: null,
+    },
+  ];
+
+  for (const recommendation of recommendations) {
+    await prisma.recommendation.create({
+      data: {
+        publicId: createId(),
+        referrerPersonId: shopOwner,
+        subjectPersonId: recommendation.subject,
+        note: recommendation.note,
+        relationshipContext: recommendation.relationshipContext,
+        categoryId: recommendation.categorySlug
+          ? (categoryIds.get(recommendation.categorySlug) ?? null)
+          : null,
+        status: 'active',
+        // Mirrors subjectPersonId while active; see prisma/schema.prisma.
+        activeSubjectKey: recommendation.subject,
+      },
+    });
+  }
+
+  // One candidate has raised their hand, so the employer's view of interested
+  // candidates — with their recommendations attached — has something in it.
+  const wiringJob = await prisma.requirement.findFirst({
+    where: { postedByPersonId: shopOwner, engagementType: 'contract' },
+    select: { id: true },
+  });
+
+  if (wiringJob) {
+    await prisma.interest.create({
+      data: {
+        publicId: createId(),
+        requirementId: wiringJob.id,
+        personId: electrician,
+        status: 'expressed',
+        note: 'എനിക്ക് സമയമുണ്ട്, വിളിക്കാം.',
+      },
+    });
+  }
+
+  console.log(
+    `  activity     : ${posted} requirements, ${recommendations.length} recommendations, 1 interest`,
+  );
 }
 
 async function main(): Promise<void> {

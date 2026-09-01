@@ -57,8 +57,17 @@ export async function resetDatabase(): Promise<void> {
   await prisma.otpChallenge.deleteMany();
   await prisma.person.deleteMany();
   await prisma.localityAdjacency.deleteMany();
-  await prisma.locality.deleteMany();
-  await prisma.category.deleteMany();
+
+  // Locality and Category are self-referential, so a flat deleteMany can try
+  // to remove a parent while its children still point at it. Delete children
+  // first: roles before tiers, and deepest localities before their ancestors.
+  await prisma.category.deleteMany({ where: { level: 'role' } });
+  await prisma.category.deleteMany({ where: { level: 'tier' } });
+
+  const deepest = await prisma.locality.aggregate({ _max: { depth: true } });
+  for (let depth = deepest._max.depth ?? 0; depth >= 0; depth -= 1) {
+    await prisma.locality.deleteMany({ where: { depth } });
+  }
 }
 
 let phoneCounter = 0;
