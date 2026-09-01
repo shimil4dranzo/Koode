@@ -7,6 +7,7 @@ import { canRecommend } from '@/server/domain/person/rules';
 import { env } from '@/server/env';
 import { RecommendForm } from '@/components/recommendations/recommend-form';
 import { Card } from '@/components/ui/card';
+import { PageGlow } from '@/components/ui/decor';
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -45,7 +46,8 @@ export default async function RecommendPage({ params }: PageProps) {
   const categories = await getCategoryGroups(locale);
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-8">
+    <div className="relative mx-auto w-full max-w-md px-4 py-8">
+      <PageGlow />
       <RecommendForm
         categories={categories}
         canRecommendNonUsers={env.ALLOW_RECOMMENDING_NON_USERS}

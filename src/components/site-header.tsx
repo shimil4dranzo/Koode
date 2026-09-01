@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { LogoMark } from '@/components/logo';
 import { getCurrentPerson } from '@/server/auth/session';
 
 /**
@@ -26,7 +27,8 @@ export async function SiteHeader() {
         these labels are already at the minimum comfortable reading size.
       */}
       <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <Link href="/" className="flex flex-col leading-tight">
+        <Link href="/" className="flex items-center gap-2.5">
+          <LogoMark className="size-9" />
           <span className="text-xl font-semibold text-brand-700">{tApp('name')}</span>
         </Link>
 

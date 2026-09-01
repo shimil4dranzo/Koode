@@ -15,13 +15,15 @@
   --color-ink-700: oklch(0.36 0.014 250);
   --color-ink-500: oklch(0.53 0.014 250);
 
-  /* Border of a form control — an input, a select, a secondary button.
+  /* Border of a form control — an input, a select, a chip, the switch track.
      WCAG 1.4.11 requires 3:1 against the adjacent surface for anything that
      identifies a control, and this is measured rather than judged by eye:
      see `npm run check:contrast`. It sits darker than a designer's instinct
-     because at 2.3:1 the edge of a text field disappears on a cheap LCD held
-     outdoors, which is where these forms are actually filled in. */
-  --color-ink-300: oklch(0.66 0.012 250);
+     (at 2.3:1 the edge of a text field disappears on a cheap LCD outdoors),
+     and at 0.64 rather than 0.66 because chips and the nearby switch put this
+     border directly on the page ground, not only on white cards, and the
+     lighter value measured 2.81:1 there. */
+  --color-ink-300: oklch(0.64 0.012 250);
 
   /* Border of a non-interactive container. WCAG does not require 3:1 here,
      and forcing it makes every card read as a wireframe box. Raised from

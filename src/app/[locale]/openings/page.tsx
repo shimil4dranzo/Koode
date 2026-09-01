@@ -2,12 +2,16 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, EmptyState } from '@/components/ui/card';
-import { SelectField } from '@/components/ui/field';
+import { PageGlow } from '@/components/ui/decor';
 import { PayRange } from '@/components/requirements/pay-range';
+import { OpeningsFilter } from '@/components/requirements/openings-filter';
 import { getCategoryOptions } from '@/server/services/category.service';
-import { getLocalityOptions } from '@/server/services/locality.service';
+import {
+  SEARCH_SCOPES,
+  getLocalityOptionsByScope,
+  type SearchScope,
+} from '@/server/services/locality.service';
 import { searchRequirements } from '@/server/services/requirement.service';
 import { ENGAGEMENT_TYPES, isOneOf } from '@/server/domain/constants';
 
@@ -45,18 +49,20 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [query, t, tCommon, tAnchor, tEngagement, localities, categories] = await Promise.all([
-    searchParams,
-    getTranslations('requirements'),
-    getTranslations('common'),
-    getTranslations('anchor'),
-    getTranslations('taxonomy.engagementType'),
-    getLocalityOptions(locale),
-    getCategoryOptions(locale),
-  ]);
+  const [query, t, tCommon, tAnchor, tEngagement, tLevel, localitiesByScope, categories] =
+    await Promise.all([
+      searchParams,
+      getTranslations('requirements'),
+      getTranslations('common'),
+      getTranslations('anchor'),
+      getTranslations('taxonomy.engagementType'),
+      getTranslations('taxonomy.localityLevel'),
+      getLocalityOptionsByScope(locale),
+      getCategoryOptions(locale),
+    ]);
 
   /**
-   * A public id that is not in the picker is dropped rather than passed on.
+   * A public id that is not in a picker is dropped rather than passed on.
    * `searchRequirements` resolves ids through the database and throws a 404 for
    * one it does not know, so a stale bookmark or a hand-edited URL would
    * otherwise blow up the whole page instead of just ignoring one filter.
@@ -64,17 +70,26 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
   const requestedLocality = firstValue(query.locality);
   const requestedCategory = firstValue(query.category);
   const requestedEngagement = firstValue(query.engagementType);
+  const requestedScope = firstValue(query.scope);
 
-  const localityPublicId = localities.some((option) => option.publicId === requestedLocality)
-    ? requestedLocality
-    : undefined;
+  // The scope a locality belongs to is recovered from which list holds it, so
+  // reloading a shared URL restores the dial to where its author left it.
+  const scopeOfSelected = SEARCH_SCOPES.find((scope) =>
+    localitiesByScope[scope].some((option) => option.publicId === requestedLocality),
+  );
+
+  const localityPublicId = scopeOfSelected !== undefined ? requestedLocality : undefined;
+  const scope: SearchScope =
+    scopeOfSelected ??
+    (isOneOf(SEARCH_SCOPES, requestedScope) ? requestedScope : 'local');
+
   const categoryPublicId = categories.some((option) => option.value === requestedCategory)
     ? requestedCategory
     : undefined;
   const engagementType = isOneOf(ENGAGEMENT_TYPES, requestedEngagement)
     ? requestedEngagement
     : undefined;
-  const includeNearby = firstValue(query.nearby) === 'true';
+  const includeNearby = scope === 'local' && firstValue(query.nearby) === 'true';
 
   const hasFilter =
     localityPublicId !== undefined ||
@@ -92,69 +107,42 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
   });
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
+    <div className="relative mx-auto w-full max-w-3xl px-4 py-8">
+      <PageGlow />
       <h1 className="text-2xl font-semibold sm:text-3xl">{t('listTitle')}</h1>
 
-      <form method="get" aria-label={tCommon('filter')} className="mt-6">
-        <Card>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label={t('filterLocality')}
-              name="locality"
-              placeholder={tCommon('all')}
-              defaultValue={localityPublicId ?? ''}
-              options={localities.map((option) => ({
+      <OpeningsFilter
+        scopes={[
+          { value: 'local', label: t('scopeLocal') },
+          { value: 'block', label: tLevel('block') },
+          { value: 'district', label: tLevel('district') },
+          { value: 'state', label: tLevel('state') },
+        ]}
+        localitiesByScope={
+          Object.fromEntries(
+            SEARCH_SCOPES.map((key) => [
+              key,
+              localitiesByScope[key].map((option) => ({
                 value: option.publicId,
                 label: option.label,
-              }))}
-            />
-
-            <SelectField
-              label={t('filterCategory')}
-              name="category"
-              placeholder={tCommon('all')}
-              defaultValue={categoryPublicId ?? ''}
-              options={categories}
-            />
-
-            <SelectField
-              label={t('filterEngagement')}
-              name="engagementType"
-              placeholder={tCommon('all')}
-              defaultValue={engagementType ?? ''}
-              options={ENGAGEMENT_TYPES.map((value) => ({
-                value,
-                label: tEngagement(value),
-              }))}
-            />
-
-            <label className="flex min-h-touch items-center gap-3 self-end">
-              <input
-                type="checkbox"
-                name="nearby"
-                value="true"
-                defaultChecked={includeNearby}
-                className="size-5 shrink-0 rounded border border-ink-300"
-              />
-              <span>{t('includeNearby')}</span>
-            </label>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button type="submit" size="lg">
-              {tCommon('search')}
-            </Button>
-            {hasFilter ? (
-              <Link
-                href="/openings"
-                className="inline-flex min-h-touch items-center justify-center rounded-lg px-4 py-2.5 underline underline-offset-2 hover:bg-ink-100"
-              >
-                {tCommon('clear')}
-              </Link>
-            ) : null}
-          </div>
-        </Card>
-      </form>
+              })),
+            ]),
+          ) as Record<SearchScope, { value: string; label: string }[]>
+        }
+        categories={categories}
+        engagements={ENGAGEMENT_TYPES.map((value) => ({
+          value,
+          label: tEngagement(value),
+        }))}
+        initial={{
+          scope,
+          locality: localityPublicId ?? '',
+          category: categoryPublicId ?? '',
+          engagementType: engagementType ?? '',
+          nearby: includeNearby,
+        }}
+        hasFilter={hasFilter}
+      />
 
       <p className="mt-6 text-ink-700">{t('resultCount', { count: items.length })}</p>
 

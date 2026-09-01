@@ -155,6 +155,51 @@ export async function getLocalityOptions(
     .sort((a, b) => a.label.localeCompare(b.label, locale));
 }
 
+/**
+ * Search scopes, from hyperlocal outward.
+ *
+ * `local` is panchayat/municipality level — the granularity people actually
+ * hire at, and the only level with adjacency data. The wider scopes reuse the
+ * same subtree search: picking a district matches everything inside it via the
+ * materialised path, no special casing. There is no `country` scope because
+ * the tree's root is the state; the day Koode leaves Kerala, add the node and
+ * the scope, in that order.
+ */
+export const SEARCH_SCOPES = ['local', 'block', 'district', 'state'] as const;
+export type SearchScope = (typeof SEARCH_SCOPES)[number];
+
+const LEVELS_BY_SCOPE: Record<SearchScope, LocalityLevel[]> = {
+  local: ['panchayat', 'ward'],
+  block: ['block'],
+  district: ['district'],
+  state: ['state'],
+};
+
+/** Locality options for each search scope, in the user's language. */
+export async function getLocalityOptionsByScope(
+  locale: string,
+): Promise<Record<SearchScope, LocalityOption[]>> {
+  const entries = await Promise.all(
+    SEARCH_SCOPES.map(
+      async (scope) =>
+        [scope, await getLocalityOptions(locale, LEVELS_BY_SCOPE[scope])] as const,
+    ),
+  );
+
+  return Object.fromEntries(entries) as Record<SearchScope, LocalityOption[]>;
+}
+
+/** Which scope a locality level belongs to, for restoring filter state. */
+export function scopeForLevel(level: LocalityLevel): SearchScope {
+  switch (level) {
+    case 'panchayat':
+    case 'ward':
+      return 'local';
+    default:
+      return level;
+  }
+}
+
 export function localityLabel(
   locality: { nameEn: string; nameMl: string | null },
   locale: string,

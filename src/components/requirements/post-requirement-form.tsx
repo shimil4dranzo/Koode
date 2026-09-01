@@ -4,6 +4,8 @@ import { useId, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
+import { ChipRadioGroup } from '@/components/ui/choice';
+import { PageGlow } from '@/components/ui/decor';
 import { SelectField, TextAreaField, TextField } from '@/components/ui/field';
 import { ApiError, api } from '@/lib/api';
 import {
@@ -120,7 +122,8 @@ export function PostRequirementForm({
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} className="mx-auto w-full max-w-3xl px-4 py-8">
+    <form onSubmit={(event) => void submit(event)} className="relative mx-auto w-full max-w-3xl px-4 py-8">
+      <PageGlow />
       <h1 className="text-2xl font-semibold sm:text-3xl">{t('postTitle')}</h1>
       <p className="mt-2 text-ink-700">{t('postSubtitle')}</p>
 
@@ -159,12 +162,12 @@ export function PostRequirementForm({
           required
         />
 
-        <SelectField
-          label={t('fieldEngagementType')}
+        {/* Four options that all fit on screen: chips, not a menu. One tap
+            instead of open-scroll-pick, and the choice stays visible. */}
+        <ChipRadioGroup
+          legend={t('fieldEngagementType')}
           name="engagementType"
           error={fieldMessage('engagementType')}
-          placeholder={tCommon('choose')}
-          defaultValue=""
           options={ENGAGEMENT_TYPES.map((value) => ({ value, label: tEngagement(value) }))}
           required
         />
@@ -230,8 +233,8 @@ export function PostRequirementForm({
           defaultValue={1}
         />
 
-        <SelectField
-          label={t('fieldContactPreference')}
+        <ChipRadioGroup
+          legend={t('fieldContactPreference')}
           name="contactPreference"
           error={fieldMessage('contactPreference')}
           defaultValue="call"

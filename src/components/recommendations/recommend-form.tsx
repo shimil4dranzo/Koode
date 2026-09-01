@@ -5,7 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { SelectField, TextAreaField, TextField } from '@/components/ui/field';
+import { ChipRadioGroup } from '@/components/ui/choice';
+import { TextAreaField, TextField } from '@/components/ui/field';
 import { ApiError, api } from '@/lib/api';
 import { useApiMessages } from '@/lib/api-messages';
 import { RELATIONSHIP_CONTEXTS } from '@/server/domain/constants';
@@ -156,16 +157,18 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
         required
       />
 
-      <SelectField
-        label={t('relationshipLabel')}
+      {/* Six short phrases that all fit on screen: chips make the referrer
+          read the honest options instead of grabbing the first menu entry. */}
+      <ChipRadioGroup
+        legend={t('relationshipLabel')}
+        name="relationshipContext"
         error={fieldMessage(fieldError, 'relationshipContext')}
-        placeholder={tCommon('choose')}
         options={RELATIONSHIP_CONTEXTS.map((context) => ({
           value: context,
           label: tTaxonomy(`relationshipContext.${context}` as never),
         }))}
         value={relationshipContext}
-        onChange={(event) => setRelationshipContext(event.target.value)}
+        onChange={setRelationshipContext}
         required
       />
 

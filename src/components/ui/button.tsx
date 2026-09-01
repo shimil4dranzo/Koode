@@ -50,7 +50,9 @@ export function Button({
       aria-busy={busy || undefined}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg font-medium',
-        'transition-colors disabled:opacity-55 disabled:cursor-not-allowed',
+        'transition disabled:opacity-55 disabled:cursor-not-allowed',
+        // Press feedback within the same frame as the tap. Scale, not layout.
+        'motion-safe:active:scale-[0.98]',
         // Never rely on colour alone; the border carries the shape too.
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],

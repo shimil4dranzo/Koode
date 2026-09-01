@@ -67,7 +67,7 @@ const TOKENS: Record<string, Rgb> = {
   'ink-900': oklchToSrgb(0.19, 0.012, 250),
   'ink-700': oklchToSrgb(0.36, 0.014, 250),
   'ink-500': oklchToSrgb(0.53, 0.014, 250),
-  'ink-300': oklchToSrgb(0.66, 0.012, 250),
+  'ink-300': oklchToSrgb(0.64, 0.012, 250),
   'ink-200': oklchToSrgb(0.8, 0.008, 250),
   'ink-100': oklchToSrgb(0.94, 0.005, 250),
   paper: oklchToSrgb(0.965, 0.004, 95),
@@ -112,6 +112,7 @@ const PAIRS: Pair[] = [
   { fg: 'ink-500', bg: 'paper', where: 'tertiary text / captions', kind: 'text' },
   { fg: 'ink-500', bg: 'paper-raised', where: 'field placeholder', kind: 'text' },
   { fg: 'ink-300', bg: 'paper-raised', where: 'input border', kind: 'ui' },
+  { fg: 'ink-300', bg: 'paper', where: 'chip border / switch track on the page ground', kind: 'ui' },
   { fg: 'ink-200', bg: 'paper', where: 'card border', kind: 'decor' },
   { fg: 'paper-raised', bg: 'paper', where: 'card surface lift', kind: 'decor' },
 

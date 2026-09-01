@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { SelectField, TextField } from '@/components/ui/field';
+import { LogoMark } from '@/components/logo';
+import { PageGlow } from '@/components/ui/decor';
 import { ApiError, api } from '@/lib/api';
 import { useApiMessages } from '@/lib/api-messages';
 import type { LocalityOption } from '@/server/services/locality.service';
@@ -131,7 +133,8 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
     });
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-8">
+    <div className="relative mx-auto w-full max-w-md px-4 py-8">
+      <PageGlow />
       {error ? (
         <p
           role="alert"
@@ -150,6 +153,7 @@ export function SignInFlow({ localities }: { localities: LocalityOption[] }) {
           className="flex flex-col gap-5"
         >
           <div>
+            <LogoMark className="mb-4 size-12" />
             <h1 className="text-2xl font-semibold">{t('signInTitle')}</h1>
             <p className="mt-2 text-ink-700">{t('signInSubtitle')}</p>
           </div>

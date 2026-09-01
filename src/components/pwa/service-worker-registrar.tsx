@@ -21,6 +21,21 @@ export function ServiceWorkerRegistrar() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    // Development builds must never register the worker. Its cache-first rule
+    // for /_next/static/ assumes content-hashed filenames, which is true of a
+    // production build and false in dev — Turbopack reuses chunk URLs across
+    // edits, so the worker would pin every tab to the CSS of whenever it first
+    // cached, and each change would look mysteriously half-applied.
+    if (process.env.NODE_ENV !== 'production') {
+      // A worker left behind by a previous production build served on this
+      // origin (e.g. testing `next start` on localhost) would break dev the
+      // same way, so actively remove it rather than merely not registering.
+      void navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => registrations.forEach((r) => void r.unregister()));
+      return;
+    }
+
     const register = () => {
       navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error: unknown) => {
         // A failed registration must never break the page — the app works

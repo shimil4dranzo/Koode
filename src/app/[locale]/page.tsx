@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Card } from '@/components/ui/card';
+import { PageGlow } from '@/components/ui/decor';
 import { getPlatformCounts } from '@/server/services/stats.service';
 
 type PageProps = { params: Promise<{ locale: string }> };
@@ -21,7 +22,8 @@ export default async function HomePage({ params }: PageProps) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
+    <div className="relative mx-auto w-full max-w-3xl px-4 py-8">
+      <PageGlow />
       <section>
         <h1 className="text-2xl font-semibold sm:text-3xl">{t('heroTitle')}</h1>
         <p className="mt-3 text-lg text-ink-700">{t('heroBody')}</p>

@@ -138,7 +138,9 @@
       "filled": "Filled",
       "closed": "Closed",
       "expired": "Expired"
-    }
+    },
+    "scope": "Search area",
+    "scopeLocal": "My area"
   },
   "profile": {
     "title": "Profile",
