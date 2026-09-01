@@ -126,8 +126,9 @@ model Category {
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   children Category[] @relation("CategoryTree")
 
-  personSkills PersonSkill[]
-  requirements Requirement[]
+  personSkills    PersonSkill[]
+  requirements    Requirement[]
+  recommendations Recommendation[]
 
   @@index([parentId])
   @@index([level])
@@ -478,8 +479,9 @@ model Recommendation {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  referrer Person            @relation("RecommendationReferrer", fields: [referrerPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  subject  Person            @relation("RecommendationSubject", fields: [subjectPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  referrer    Person            @relation("RecommendationReferrer", fields: [referrerPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subject     Person            @relation("RecommendationSubject", fields: [subjectPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category    Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   invitations ClaimInvitation[]
 
   @@unique([referrerPersonId, activeSubjectKey], map: "uq_recommendation_active_pair")

@@ -137,6 +137,11 @@ export const updateRequirementSchema = z.object({
   vacancies: z.coerce.number().int().min(1).max(999).optional(),
 });
 
+/** Moving a requirement to a terminal state. `expired` is set by the sweeper. */
+export const requirementStatusSchema = z.object({
+  status: z.enum(['filled', 'closed']),
+});
+
 export const searchRequirementsSchema = z.object({
   locality: publicIdSchema.optional(),
   category: publicIdSchema.optional(),

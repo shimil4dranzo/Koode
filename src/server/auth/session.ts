@@ -39,6 +39,16 @@ export type CurrentPerson = {
   platformRole: PlatformRole;
   localityId: bigint | null;
   hasVerifiedMembership: boolean;
+  /**
+   * Always null, and present only so that a `CurrentPerson` satisfies
+   * `PersonFacts` and can be passed straight to the domain rules.
+   *
+   * `getCurrentPerson` returns null for an anonymised account, so a value of
+   * this type is by construction never anonymised. Keeping the field rather
+   * than casting at each call site means the domain rules stay the single
+   * authority on what an anonymised person may do.
+   */
+  anonymizedAt: null;
 };
 
 export type RequestMeta = { ip: string | null; userAgent: string | null };
@@ -115,6 +125,7 @@ export const getCurrentPerson = cache(async (): Promise<CurrentPerson | null> =>
     platformRole: person.platformRole as PlatformRole,
     localityId: person.localityId,
     hasVerifiedMembership: person.anchorMemberships.length > 0,
+    anonymizedAt: null,
   };
 });
 

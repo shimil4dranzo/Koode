@@ -12,12 +12,19 @@ import { defineRouting } from 'next-intl/routing';
  * which then breaks confusingly the day the default changes, and makes a
  * shared link's language depend on who shared it.
  */
+/**
+ * Named separately because Route Handlers need to read it too, and next-intl
+ * types `routing.localeCookie` as `boolean | CookieAttributes`, so the name is
+ * not reachable from the routing object.
+ */
+export const LOCALE_COOKIE = 'KOODE_LOCALE';
+
 export const routing = defineRouting({
   locales: ['ml', 'en'],
   defaultLocale: 'ml',
   localePrefix: 'always',
   localeCookie: {
-    name: 'KOODE_LOCALE',
+    name: LOCALE_COOKIE,
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',
   },

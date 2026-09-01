@@ -398,6 +398,9 @@ ALTER TABLE `recommendation` ADD CONSTRAINT `recommendation_referrer_person_id_f
 ALTER TABLE `recommendation` ADD CONSTRAINT `recommendation_subject_person_id_fkey` FOREIGN KEY (`subject_person_id`) REFERENCES `person`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `recommendation` ADD CONSTRAINT `recommendation_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `recommendation_block` ADD CONSTRAINT `recommendation_block_subject_person_id_fkey` FOREIGN KEY (`subject_person_id`) REFERENCES `person`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
