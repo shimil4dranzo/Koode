@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+# A newer push to the same branch makes the older run irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, lint and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      # Integration tests need a real MySQL 8: the invariants worth testing are
+      # partly enforced by database constraints, and SQLite would not have them.
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_password
+          MYSQL_DATABASE: Koode
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci_root_password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      # CI-only values. Real secrets never appear in this file or in the repo.
+      DATABASE_URL: mysql://root:ci_root_password@127.0.0.1:3306/Koode
+      SESSION_SECRET: ci-session-secret-at-least-32-characters-long
+      IP_HASH_SECRET: ci-ip-hash-secret-at-least-32-characters-long
+      SMS_PROVIDER: console
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Check migration charset and collation
+        # Malayalam silently corrupts under MySQL's legacy 3-byte utf8, so a
+        # migration with the wrong collation must never reach main.
+        run: npm run db:normalize -- --check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Apply migrations
+        run: npm run db:deploy
+
+      - name: Verify the database really stores Malayalam
+        run: npm run db:check
+
+      - name: Integration tests
+        run: npm run test:integration
+        env:
+          TEST_DATABASE_URL: mysql://root:ci_root_password@127.0.0.1:3306/Koode
+
+      - name: Build
+        run: npm run build
+
+      - name: Report client bundle size
+        # The brief asks for the initial JS budget at every milestone; printing
+        # it in CI is the only way that number stays honest.
+        run: npm run bundle:report

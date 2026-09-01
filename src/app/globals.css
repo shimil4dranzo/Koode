@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+
+/**
+ * Design tokens.
+ *
+ * The constraints here come from the users, not from taste: a low-end Android
+ * phone, held outdoors, by someone who may read Malayalam more comfortably
+ * than English and may not read either fluently. That means large text, high
+ * contrast, big tap targets, and meaning never carried by colour alone.
+ */
+@theme {
+  /* Ink and paper. Near-black rather than pure black reads better on the
+     cheap LCD panels these phones use. */
+  --color-ink-900: oklch(0.19 0.012 250);
+  --color-ink-700: oklch(0.36 0.014 250);
+  --color-ink-500: oklch(0.53 0.014 250);
+  --color-ink-300: oklch(0.74 0.010 250);
+  --color-ink-200: oklch(0.86 0.007 250);
+  --color-ink-100: oklch(0.94 0.005 250);
+  --color-paper: oklch(0.99 0.003 95);
+  --color-paper-raised: oklch(1 0 0);
+
+  /* Kerala green — the association's colour, and legible in sunlight. */
+  --color-brand-700: oklch(0.42 0.11 155);
+  --color-brand-600: oklch(0.50 0.13 155);
+  --color-brand-500: oklch(0.58 0.14 155);
+  --color-brand-100: oklch(0.94 0.03 155);
+
+  /* Trust marker for verified members. Deliberately distinct from brand green
+     so a badge never reads as decoration. */
+  --color-verify-600: oklch(0.52 0.13 250);
+  --color-verify-100: oklch(0.95 0.03 250);
+
+  --color-warn-600: oklch(0.58 0.15 65);
+  --color-warn-100: oklch(0.95 0.05 65);
+  --color-danger-600: oklch(0.53 0.19 25);
+  --color-danger-100: oklch(0.95 0.04 25);
+
+  /* Malayalam glyphs carry more vertical detail than Latin ones and become
+     unreadable at the sizes a Latin-first design would use. The base size is
+     therefore 17px, not 16px, and line height is generous. */
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.65;
+  --text-lg--line-height: 1.6;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.4;
+
+  --radius-card: 0.75rem;
+
+  /* The minimum comfortable touch target. Referenced rather than repeated so
+     it cannot drift between components. */
+  --spacing-touch: 2.75rem;
+}
+
+/**
+ * Font stack.
+ *
+ * No webfont is downloaded. Every Android and iOS device that renders
+ * Malayalam already ships a Malayalam font, and pulling a ~400 KB Malayalam
+ * webfont over patchy mobile data to replace one the phone already has would
+ * be the single most expensive thing on the page. The named families are the
+ * system Malayalam fonts on Android, iOS, Windows and Linux respectively.
+ */
+@layer base {
+  :root {
+    --font-sans:
+      system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Malayalam',
+      'Malayalam Sangam MN', 'Nirmala UI', 'Manjari', 'Meera', sans-serif;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    /* Stop iOS Safari inflating text in landscape, which breaks layouts that
+       were checked at 360px. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink-900);
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Malayalam text should not be hyphenated or broken mid-cluster. */
+  :lang(ml) {
+    hyphens: none;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  /* A visible, high-contrast focus ring everywhere. Removing it to "clean up"
+     the design makes the app unusable by keyboard and by screen reader. */
+  :focus-visible {
+    outline: 3px solid var(--color-verify-600);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Native form controls, not re-implemented ones: they bring the right
+     keyboard, the right autofill, and the platform's own accessibility. */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Visible only to assistive technology. */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

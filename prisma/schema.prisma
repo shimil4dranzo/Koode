@@ -1,0 +1,661 @@
+// Koode — data model
+// ---------------------------------------------------------------------------
+// Conventions enforced throughout this file (see ARCHITECTURE.md for the why):
+//
+//  1. Every table has an internal `id BIGINT AUTO_INCREMENT` clustered primary
+//     key and a separate `public_id` (cuid2) used in URLs and API responses.
+//     The internal id is NEVER exposed. Prisma maps BigInt to the JavaScript
+//     BigInt type, which throws on JSON.stringify — we treat that as a feature:
+//     accidentally serialising an internal id is a loud runtime error, not a
+//     silent leak.
+//
+//  2. Status/enum-like columns are VARCHAR, not MySQL native ENUM. Altering a
+//     native ENUM rebuilds the table; these columns will change. Allowed values
+//     live in src/server/domain/**/constants.ts and are validated in the domain
+//     layer.
+//
+//  3. All table and column names are lower_snake_case via @@map/@map. This
+//     sidesteps `lower_case_table_names` differences between a developer's
+//     macOS box (case-insensitive) and a Linux server (case-sensitive).
+//
+//  4. Money is DECIMAL. Timestamps are stored UTC and rendered IST.
+//
+//  5. Nothing is hard-deleted. Removal is either a status change or
+//     anonymisation (personal columns nulled, row and its edges retained).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// The connection URL lives in prisma.config.ts (Prisma 7 moved it out of the
+// schema); the runtime client is constructed with a MariaDB/MySQL driver
+// adapter in src/server/db/client.ts.
+datasource db {
+  provider = "mysql"
+}
+
+// ===========================================================================
+// Geography
+// ===========================================================================
+
+/// Hierarchical place tree: state > district > block > panchayat > ward.
+/// Search is hyperlocal, so this hierarchy is load-bearing.
+model Locality {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  /// One of LOCALITY_LEVELS (state|district|block|panchayat|ward).
+  level    String  @db.VarChar(20)
+  nameEn   String  @map("name_en") @db.VarChar(120)
+  nameMl   String? @map("name_ml") @db.VarChar(120)
+  parentId BigInt? @map("parent_id")
+
+  /// Materialised path of ancestor ids, e.g. "/1/4/12/". Maintained on write.
+  /// Lets subtree queries be a single indexed LIKE '/1/4/%' instead of a
+  /// recursive CTE. See ARCHITECTURE.md §Locality query benchmark.
+  path String @db.VarChar(255)
+
+  /// Tree depth, 0 for the root (state). Denormalised for cheap level filters.
+  depth Int @db.SmallInt
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent   Locality?  @relation("LocalityTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  children Locality[] @relation("LocalityTree")
+
+  adjacentFrom LocalityAdjacency[] @relation("AdjacencyFrom")
+  adjacentTo   LocalityAdjacency[] @relation("AdjacencyTo")
+
+  people       Person[]
+  anchorOrgs   AnchorOrg[]
+  requirements Requirement[]
+
+  @@index([parentId])
+  @@index([level])
+  @@index([path])
+  @@map("locality")
+}
+
+/// Explicit "borders on" edges between localities.
+///
+/// The tree cannot answer "nearby": two panchayats under one block are not
+/// necessarily neighbours, and real adjacency crosses block and district
+/// boundaries. Adjacency is therefore hand-curated data, stored symmetrically
+/// (both directions inserted) so a nearby query is one index lookup.
+model LocalityAdjacency {
+  id BigInt @id @default(autoincrement())
+
+  localityId BigInt @map("locality_id")
+  neighbourId BigInt @map("neighbour_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  locality  Locality @relation("AdjacencyFrom", fields: [localityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  neighbour Locality @relation("AdjacencyTo", fields: [neighbourId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([localityId, neighbourId])
+  @@index([neighbourId])
+  @@map("locality_adjacency")
+}
+
+// ===========================================================================
+// Work taxonomy
+// ===========================================================================
+
+/// Two levels: tier (the four in the brief) > specific role.
+/// A chartered accountant and a loading worker are the same shape of row.
+model Category {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  /// One of CATEGORY_LEVELS (tier|role).
+  level    String  @db.VarChar(20)
+  slug     String  @unique @db.VarChar(80)
+  nameEn   String  @map("name_en") @db.VarChar(120)
+  nameMl   String? @map("name_ml") @db.VarChar(120)
+  parentId BigInt? @map("parent_id")
+
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  children Category[] @relation("CategoryTree")
+
+  personSkills PersonSkill[]
+  requirements Requirement[]
+
+  @@index([parentId])
+  @@index([level])
+  @@map("category")
+}
+
+// ===========================================================================
+// Identity
+// ===========================================================================
+
+/// One human, one row. Employer / candidate / referrer are not separate tables
+/// — they are things a Person does. Only privileged roles are stored, as
+/// claims on this row (`platformRole`) or on AnchorMembership.
+model Person {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  /// E.164, e.g. +919846000000. The identity anchor.
+  ///
+  /// Nullable ONLY so that anonymisation can null it while retaining the row
+  /// and its recommendation edges. MySQL permits many NULLs under a unique
+  /// index, which is exactly the behaviour we want.
+  ///
+  /// This column must never appear in a list response or a client bundle. It
+  /// is selected exclusively by the audited reveal path.
+  phone String? @unique @db.VarChar(20)
+
+  displayName String  @map("display_name") @db.VarChar(120)
+  localityId  BigInt? @map("locality_id")
+
+  /// One of PERSON_STATUSES (pending_claim|active|suspended).
+  status String @default("pending_claim") @db.VarChar(20)
+
+  /// One of PLATFORM_ROLES (none|moderator|admin).
+  platformRole String @default("none") @map("platform_role") @db.VarChar(20)
+
+  /// Null when the person registered themselves. Set to the referrer when the
+  /// row was created by somebody else recommending them — the case that makes
+  /// the claim flow legally necessary.
+  createdByPersonId BigInt? @map("created_by_person_id")
+
+  claimedAt    DateTime? @map("claimed_at")
+  suspendedAt  DateTime? @map("suspended_at")
+  /// Set when the person exercised deletion. Personal columns are nulled;
+  /// the row survives so recommendation history stays statistically intact.
+  anonymizedAt DateTime? @map("anonymized_at")
+
+  /// Free-text, optional. No resume upload in Stage 1.
+  headline String? @db.VarChar(200)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  locality  Locality? @relation(fields: [localityId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdBy Person?   @relation("PersonCreatedBy", fields: [createdByPersonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  created   Person[]  @relation("PersonCreatedBy")
+
+  skills            PersonSkill[]
+  consents          ConsentRecord[]
+  sessions          Session[]
+  anchorMemberships AnchorMembership[] @relation("MembershipSubject")
+  verifiedMemberships AnchorMembership[] @relation("MembershipVerifier")
+
+  requirementsPosted Requirement[] @relation("RequirementPoster")
+
+  recommendationsGiven    Recommendation[] @relation("RecommendationReferrer")
+  recommendationsReceived Recommendation[] @relation("RecommendationSubject")
+
+  claimInvitations ClaimInvitation[]
+
+  blocksCreated RecommendationBlock[] @relation("BlockSubject")
+  blockedAs     RecommendationBlock[] @relation("BlockReferrer")
+
+  interests Interest[]
+
+  engagements         Engagement[] @relation("EngagementSubject")
+  engagementsRecorded Engagement[] @relation("EngagementRecorder")
+
+  auditEvents       AuditEvent[]
+  moderationReports ModerationReport[] @relation("ReportReporter")
+  moderationResolved ModerationReport[] @relation("ReportResolver")
+
+  @@index([localityId])
+  @@index([status])
+  @@index([createdByPersonId])
+  @@map("person")
+}
+
+/// What a person can do, and how well. Optional qualification and experience —
+/// mandatory for nobody, because the same shape serves a mason and an auditor.
+model PersonSkill {
+  id BigInt @id @default(autoincrement())
+
+  personId   BigInt @map("person_id")
+  categoryId BigInt @map("category_id")
+
+  yearsExperience  Int?    @map("years_experience") @db.SmallInt
+  qualificationNote String? @map("qualification_note") @db.VarChar(200)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  person   Person   @relation(fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([personId, categoryId])
+  @@index([categoryId])
+  @@map("person_skill")
+}
+
+/// Versioned consent. The text of each version is in src/server/consent/versions.ts
+/// so that what a person agreed to can be reproduced exactly, years later.
+model ConsentRecord {
+  id BigInt @id @default(autoincrement())
+
+  personId       BigInt @map("person_id")
+  consentVersion String @map("consent_version") @db.VarChar(20)
+  /// One of CONSENT_PURPOSES (registration|recommendation_subject).
+  purpose        String @db.VarChar(40)
+  locale         String @db.VarChar(8)
+
+  acceptedAt DateTime @default(now()) @map("accepted_at")
+  /// Salted hash. We keep proof-of-origin without storing an IP address.
+  ipHash     String?  @map("ip_hash") @db.VarChar(64)
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([personId, purpose])
+  @@map("consent_record")
+}
+
+/// Server-side session. The cookie carries an opaque secret; only its hash is
+/// stored, so a database leak does not hand over live sessions.
+model Session {
+  id BigInt @id @default(autoincrement())
+
+  personId  BigInt @map("person_id")
+  tokenHash String @unique @map("token_hash") @db.VarChar(64)
+
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  userAgent String? @map("user_agent") @db.VarChar(255)
+  ipHash    String? @map("ip_hash") @db.VarChar(64)
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([personId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+/// A pending one-time password. Stored in MySQL rather than Redis so that a
+/// Redis restart cannot lock every user out mid-login.
+model OtpChallenge {
+  id BigInt @id @default(autoincrement())
+
+  phone    String @db.VarChar(20)
+  codeHash String @map("code_hash") @db.VarChar(64)
+  /// One of OTP_PURPOSES (login|claim).
+  purpose  String @db.VarChar(20)
+
+  attempts  Int       @default(0) @db.SmallInt
+  expiresAt DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, purpose])
+  @@index([expiresAt])
+  @@map("otp_challenge")
+}
+
+// ===========================================================================
+// Trust anchors
+// ===========================================================================
+
+/// A local institution whose word means something: the merchants' association,
+/// a civic club, a residents' association. Seeded with KVVES Edakkara.
+model AnchorOrg {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  nameEn String  @map("name_en") @db.VarChar(160)
+  nameMl String? @map("name_ml") @db.VarChar(160)
+  /// One of ANCHOR_ORG_TYPES (merchant_assoc|civic_club|swayamsahaya|residents_assoc).
+  type   String  @db.VarChar(30)
+
+  localityId BigInt @map("locality_id")
+  isActive   Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  locality    Locality           @relation(fields: [localityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  memberships AnchorMembership[]
+
+  @@index([localityId])
+  @@map("anchor_org")
+}
+
+/// Person belongs to AnchorOrg, vouched for by a named office-bearer.
+/// Produces the verified badge and — pending the policy decision recorded in
+/// ARCHITECTURE.md — gates who may write a recommendation.
+model AnchorMembership {
+  id BigInt @id @default(autoincrement())
+
+  personId    BigInt @map("person_id")
+  anchorOrgId BigInt @map("anchor_org_id")
+
+  /// One of MEMBERSHIP_ROLES (member|office_bearer). An office_bearer is the
+  /// anchor admin: they may verify other members of the same org.
+  role String @default("member") @db.VarChar(20)
+
+  /// One of MEMBERSHIP_STATUSES (pending|verified|revoked).
+  status String @default("pending") @db.VarChar(20)
+
+  membershipRef String? @map("membership_ref") @db.VarChar(60)
+
+  verifiedByPersonId BigInt?   @map("verified_by_person_id")
+  verifiedAt         DateTime? @map("verified_at")
+  revokedAt          DateTime? @map("revoked_at")
+  revokedReason      String?   @map("revoked_reason") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  person     Person    @relation("MembershipSubject", fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  anchorOrg  AnchorOrg @relation(fields: [anchorOrgId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  verifiedBy Person?   @relation("MembershipVerifier", fields: [verifiedByPersonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([personId, anchorOrgId])
+  @@index([anchorOrgId, status])
+  @@map("anchor_membership")
+}
+
+// ===========================================================================
+// Demand side
+// ===========================================================================
+
+model Requirement {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  postedByPersonId BigInt @map("posted_by_person_id")
+
+  title       String @db.VarChar(160)
+  description String @db.Text
+
+  categoryId BigInt @map("category_id")
+  localityId BigInt @map("locality_id")
+
+  /// One of ENGAGEMENT_TYPES (permanent|part_time|contract|one_day).
+  engagementType String @map("engagement_type") @db.VarChar(20)
+
+  /// Money is DECIMAL, never FLOAT. All three are optional together.
+  payMin    Decimal? @map("pay_min") @db.Decimal(12, 2)
+  payMax    Decimal? @map("pay_max") @db.Decimal(12, 2)
+  /// One of PAY_PERIODS (hourly|daily|weekly|monthly|fixed).
+  payPeriod String?  @map("pay_period") @db.VarChar(20)
+
+  /// One of CONTACT_PREFERENCES (call|whatsapp|either).
+  /// `whatsapp` here is only a stated preference on how to be contacted; there
+  /// is no WhatsApp integration in Stage 1.
+  contactPreference String @default("call") @map("contact_preference") @db.VarChar(20)
+
+  vacancies Int @default(1) @db.SmallInt
+
+  /// One of REQUIREMENT_STATUSES (open|filled|closed|expired).
+  status String @default("open") @db.VarChar(20)
+
+  expiresAt DateTime  @map("expires_at")
+  filledAt  DateTime? @map("filled_at")
+  closedAt  DateTime? @map("closed_at")
+
+  /// Set by a moderator; hides the row from every public listing.
+  hiddenAt     DateTime? @map("hidden_at")
+  hiddenReason String?   @map("hidden_reason") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  postedBy Person   @relation("RequirementPoster", fields: [postedByPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  locality Locality @relation(fields: [localityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  interests   Interest[]
+  engagements Engagement[]
+
+  // The hot query is: open requirements in a set of localities, optionally
+  // filtered by category, newest first.
+  @@index([status, localityId, createdAt])
+  @@index([status, categoryId, createdAt])
+  @@index([postedByPersonId])
+  @@index([expiresAt])
+  @@map("requirement")
+}
+
+// ===========================================================================
+// The centre of the product
+// ===========================================================================
+
+/// A named person vouching for another, on the record.
+///
+/// Invariants (enforced in src/server/domain/recommendation, and structurally
+/// here where MySQL allows):
+///   - a referrer may not recommend themselves
+///   - at most one ACTIVE recommendation per (referrer, subject) pair
+///   - `note` is immutable once written; correction means withdraw + re-create
+///   - withdrawal is soft and retains history
+model Recommendation {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  referrerPersonId BigInt @map("referrer_person_id")
+  subjectPersonId  BigInt @map("subject_person_id")
+
+  /// Immutable once created. There is no update path in the service layer.
+  note String @db.Text
+
+  /// How the referrer knows the subject. One of RELATIONSHIP_CONTEXTS.
+  relationshipContext String @map("relationship_context") @db.VarChar(40)
+
+  /// Optional: the kind of work this vouch is about.
+  categoryId BigInt? @map("category_id")
+
+  /// One of RECOMMENDATION_STATUSES (active|withdrawn).
+  status String @default("active") @db.VarChar(20)
+
+  /// Partial-unique emulation.
+  ///
+  /// MySQL has no partial indexes, so "one ACTIVE recommendation per pair" is
+  /// enforced by mirroring `subject_person_id` here while active and setting it
+  /// to NULL on withdrawal. Many NULLs coexist under a unique index, so any
+  /// number of withdrawn rows for the same pair is fine while a second active
+  /// one is rejected by the database. Kept in sync in exactly one place:
+  /// src/server/services/recommendation.service.ts.
+  activeSubjectKey BigInt? @map("active_subject_key")
+
+  withdrawnAt     DateTime? @map("withdrawn_at")
+  withdrawnReason String?   @map("withdrawn_reason") @db.VarChar(255)
+
+  hiddenAt     DateTime? @map("hidden_at")
+  hiddenReason String?   @map("hidden_reason") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  referrer Person            @relation("RecommendationReferrer", fields: [referrerPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subject  Person            @relation("RecommendationSubject", fields: [subjectPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  invitations ClaimInvitation[]
+
+  @@unique([referrerPersonId, activeSubjectKey], map: "uq_recommendation_active_pair")
+  @@index([subjectPersonId, status])
+  @@index([referrerPersonId, status])
+  @@map("recommendation")
+}
+
+/// Subject-side veto. Written when a recommended person rejects their profile;
+/// blocks that referrer from creating the row again.
+model RecommendationBlock {
+  id BigInt @id @default(autoincrement())
+
+  subjectPersonId  BigInt @map("subject_person_id")
+  referrerPersonId BigInt @map("referrer_person_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subject  Person @relation("BlockSubject", fields: [subjectPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  referrer Person @relation("BlockReferrer", fields: [referrerPersonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([subjectPersonId, referrerPersonId])
+  @@index([referrerPersonId])
+  @@map("recommendation_block")
+}
+
+/// The invitation that makes third-party data entry lawful: it tells the
+/// subject who recommended them and what was written, and gives them a real
+/// choice. Only the hash of the token is stored.
+model ClaimInvitation {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  personId         BigInt  @map("person_id")
+  recommendationId BigInt? @map("recommendation_id")
+
+  tokenHash String @unique @map("token_hash") @db.VarChar(64)
+
+  /// One of CLAIM_STATUSES (pending|claimed|rejected|expired).
+  status String @default("pending") @db.VarChar(20)
+
+  expiresAt  DateTime  @map("expires_at")
+  claimedAt  DateTime? @map("claimed_at")
+  rejectedAt DateTime? @map("rejected_at")
+
+  sentCount  Int      @default(0) @map("sent_count") @db.SmallInt
+  lastSentAt DateTime? @map("last_sent_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  person         Person          @relation(fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recommendation Recommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([personId, status])
+  @@index([expiresAt])
+  @@map("claim_invitation")
+}
+
+// ===========================================================================
+// Supply side and outcomes
+// ===========================================================================
+
+model Interest {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  requirementId BigInt @map("requirement_id")
+  personId      BigInt @map("person_id")
+
+  /// One of INTEREST_STATUSES (expressed|shortlisted|declined|withdrawn).
+  status String @default("expressed") @db.VarChar(20)
+
+  note String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([requirementId, personId])
+  @@index([personId, status])
+  @@map("interest")
+}
+
+/// What actually happened. Captured now, computed from never — Stage 2 will
+/// build referrer credibility on top of this, and it can only do that if we
+/// start collecting today.
+model Engagement {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  requirementId BigInt @map("requirement_id")
+  personId      BigInt @map("person_id")
+
+  /// One of ENGAGEMENT_OUTCOMES (completed|ongoing|did_not_proceed).
+  outcome String @db.VarChar(30)
+
+  note String? @db.VarChar(500)
+
+  recordedByPersonId BigInt   @map("recorded_by_person_id")
+  recordedAt         DateTime @default(now()) @map("recorded_at")
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  person      Person      @relation("EngagementSubject", fields: [personId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recordedBy  Person      @relation("EngagementRecorder", fields: [recordedByPersonId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([requirementId, personId])
+  @@index([personId])
+  @@map("engagement")
+}
+
+// ===========================================================================
+// Oversight
+// ===========================================================================
+
+/// Append-only. There is no update or delete path to this table anywhere in
+/// the codebase.
+model AuditEvent {
+  id BigInt @id @default(autoincrement())
+
+  /// Null for anonymous or system-originated events.
+  actorPersonId BigInt? @map("actor_person_id")
+
+  /// Dotted action name, e.g. "recommendation.created", "contact.revealed".
+  action String @db.VarChar(60)
+
+  entityType String? @map("entity_type") @db.VarChar(40)
+  /// The PUBLIC id of the entity, so this log stays readable without joins and
+  /// never contains an internal sequential id.
+  entityId   String? @map("entity_id") @db.VarChar(30)
+
+  /// Salted hash — we can correlate abuse without storing an IP address.
+  ipHash    String? @map("ip_hash") @db.VarChar(64)
+  userAgent String? @map("user_agent") @db.VarChar(255)
+
+  /// Small JSON blob. Must never contain a phone number or any raw PII.
+  metadata Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  actor Person? @relation(fields: [actorPersonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([actorPersonId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_event")
+}
+
+model ModerationReport {
+  id       BigInt @id @default(autoincrement())
+  publicId String @unique @map("public_id") @db.VarChar(30)
+
+  reporterPersonId BigInt? @map("reporter_person_id")
+
+  /// One of REPORTABLE_ENTITIES (requirement|recommendation|person).
+  entityType String @map("entity_type") @db.VarChar(40)
+  entityId   String @map("entity_id") @db.VarChar(30)
+
+  /// One of REPORT_REASONS.
+  reason String  @db.VarChar(40)
+  detail String? @db.VarChar(500)
+
+  /// One of REPORT_STATUSES (open|actioned|dismissed).
+  status String @default("open") @db.VarChar(20)
+
+  resolvedByPersonId BigInt?   @map("resolved_by_person_id")
+  resolvedAt         DateTime? @map("resolved_at")
+  resolutionNote     String?   @map("resolution_note") @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  reporter   Person? @relation("ReportReporter", fields: [reporterPersonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  resolvedBy Person? @relation("ReportResolver", fields: [resolvedByPersonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([status, createdAt])
+  @@index([entityType, entityId])
+  @@map("moderation_report")
+}

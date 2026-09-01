@@ -1,0 +1,48 @@
+# --- Secrets -----------------------------------------------------------------
+# Every .env variant is ignored EXCEPT the committed template.
+.env
+.env.*
+!.env.example
+
+# --- Dependencies ------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+
+# --- Build output ------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+
+# --- Test / coverage ---------------------------------------------------------
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# --- Caches ------------------------------------------------------------------
+.turbo/
+.eslintcache
+*.tsbuildinfo
+
+# --- Editors / OS ------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Local data --------------------------------------------------------------
+/data/mysql/
+/data/redis/
+*.log
+npm-debug.log*
+
+# --- Build brief (contains a live credential; see ARCHITECTURE.md) -----------
+KOODE_BUILD_PROMPT.md

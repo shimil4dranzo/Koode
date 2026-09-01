@@ -1,0 +1,57 @@
+# Local development stack. Not a production topology — see the deployment
+# runbook in docs/RUNBOOK.md for that.
+#
+#   docker compose up -d
+#   npm run db:deploy && npm run db:seed
+#
+# The app itself is deliberately NOT containerised here: running `npm run dev`
+# on the host gives a far faster edit/reload loop, and the container image is
+# built from the Dockerfile for deployment only.
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: koode-mysql
+    restart: unless-stopped
+    command:
+      # Server-wide defaults so that anything created outside a migration —
+      # a manual table, an ad-hoc import — still lands in the right charset.
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      # 0 = table names stored as given and compared case-sensitively, which is
+      # the Linux default. Pinning it here means macOS and Linux behave
+      # identically. See ARCHITECTURE.md §Identifier case.
+      - --lower-case-table-names=0
+      - --default-time-zone=+00:00
+    environment:
+      # Local development only. Overridden by MYSQL_ROOT_PASSWORD in .env.local
+      # if set; never reuse this value anywhere real.
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-koode_local_dev}
+      MYSQL_DATABASE: Koode
+    ports:
+      - '3306:3306'
+    volumes:
+      - koode-mysql-data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-p${MYSQL_ROOT_PASSWORD:-koode_local_dev}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: koode-redis
+    restart: unless-stopped
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  koode-mysql-data:
