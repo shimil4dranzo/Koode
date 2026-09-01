@@ -117,6 +117,8 @@ const PAIRS: Pair[] = [
   { fg: 'paper-raised', bg: 'paper', where: 'card surface lift', kind: 'decor' },
 
   { fg: 'white', bg: 'brand-600', where: 'primary button label', kind: 'text' },
+  { fg: 'white', bg: 'brand-700', where: 'closing CTA heading on the green band', kind: 'text' },
+  { fg: 'brand-100', bg: 'brand-700', where: 'closing CTA body text', kind: 'text' },
   { fg: 'brand-700', bg: 'paper', where: 'link / brand wordmark', kind: 'text' },
   { fg: 'brand-700', bg: 'paper-raised', where: 'link on a card', kind: 'text' },
   { fg: 'brand-700', bg: 'brand-100', where: 'step number badge', kind: 'text' },

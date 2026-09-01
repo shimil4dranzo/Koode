@@ -7,7 +7,7 @@ import { ApiError, api } from '@/lib/api';
 import type { ContactPreference } from '@/server/domain/constants';
 
 /**
- * The one button in Koode that hands over a phone number.
+ * The one button in Koode that hands over an employer's contact details.
  *
  * It is a POST, not a link, because the server writes an audit record before
  * answering: a number must never be revealable by something a browser might
@@ -18,6 +18,7 @@ import type { ContactPreference } from '@/server/domain/constants';
 
 type RevealedContact = {
   phone: string;
+  contactEmail: string | null;
   contactPreference: ContactPreference;
   displayName: string;
 };
@@ -78,6 +79,18 @@ export function RevealContact({
         >
           {contact.phone}
         </a>
+
+        {contact.contactEmail ? (
+          // Wraps rather than truncates: a half-shown address is useless, and
+          // long domains are common. break-all keeps it inside 360px.
+          <a
+            href={`mailto:${contact.contactEmail}`}
+            className="mt-1 flex min-h-touch items-center break-all text-lg font-medium text-verify-600 underline underline-offset-4"
+          >
+            {contact.contactEmail}
+          </a>
+        ) : null}
+
         <p className="mt-1">{tContact(contact.contactPreference)}</p>
         <p className="mt-2 text-sm text-ink-700">{t('contactRevealNote')}</p>
       </div>

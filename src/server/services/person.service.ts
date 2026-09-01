@@ -207,6 +207,8 @@ export async function exportPersonalData(
     select: {
       publicId: true,
       phone: true,
+      contactEmail: true,
+      email: true,
       displayName: true,
       headline: true,
       status: true,
@@ -287,6 +289,8 @@ export async function exportPersonalData(
     profile: {
       id: row.publicId,
       phone: row.phone,
+      signInEmail: row.email,
+      contactEmail: row.contactEmail,
       name: row.displayName,
       headline: row.headline,
       status: row.status,
@@ -396,6 +400,7 @@ export async function deleteAccount(
         // The convenience credential goes with the identity it rode on.
         googleSub: null,
         email: null,
+        contactEmail: null,
         anonymizedAt: now,
       },
     });
@@ -443,6 +448,18 @@ export async function getOwnEditableProfile(person: CurrentPerson): Promise<{
     headline: row.headline,
     localityPublicId: row.locality?.publicId ?? null,
   };
+}
+
+/**
+ * The account address, used to prefill the contact-e-mail field the first
+ * time somebody posts. Their own data, shown only to them.
+ */
+export async function getOwnAccountEmail(person: CurrentPerson): Promise<string> {
+  const row = await prisma.person.findUniqueOrThrow({
+    where: { id: person.id },
+    select: { email: true },
+  });
+  return row.email ?? '';
 }
 
 /** Shown on the person's own settings page so they can check the number on file. */

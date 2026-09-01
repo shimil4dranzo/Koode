@@ -48,9 +48,27 @@ export const CONSENT_VERSIONS: readonly ConsentVersion[] = [
       'consent.pointNoSelling',
     ],
   },
+  {
+    // Added when identity moved from phone+OTP to e-mail/Google accounts: the
+    // v1 text described storing a mobile number as the account identity,
+    // which stopped being true. Its strings are frozen under `consent.*`;
+    // this version points at a separate `consent.v2.*` set, because editing
+    // the old keys in place would silently change what people who accepted
+    // v1 are recorded as having agreed to.
+    version: '2026-09-02.1',
+    publishedOn: '2026-09-02',
+    purpose: 'registration',
+    messageKeys: [
+      'consent.v2.intro',
+      'consent.v2.pointContact',
+      'consent.v2.pointRecommendations',
+      'consent.v2.pointControl',
+      'consent.v2.pointNoSelling',
+    ],
+  },
 ] as const;
 
-export const CURRENT_CONSENT_VERSION = '2026-09-01.1';
+export const CURRENT_CONSENT_VERSION = '2026-09-02.1';
 
 export function getConsentVersion(version: string): ConsentVersion | undefined {
   return CONSENT_VERSIONS.find((entry) => entry.version === version);

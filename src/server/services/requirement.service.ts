@@ -280,6 +280,8 @@ export async function getRequirementDetail(
 
 export type RevealedContact = {
   phone: string;
+  /** Null when the poster published no address. Never the login e-mail. */
+  contactEmail: string | null;
   contactPreference: ContactPreference;
   displayName: string;
 };
@@ -325,6 +327,9 @@ export async function revealContact(
         select: {
           publicId: true,
           phone: true,
+          // The published address, never `email` — that is the login
+          // identifier and is not a reveal target. See prisma/schema.prisma.
+          contactEmail: true,
           displayName: true,
           status: true,
           anonymizedAt: true,
@@ -364,6 +369,7 @@ export async function revealContact(
 
   return {
     phone: employer.phone,
+    contactEmail: employer.contactEmail,
     contactPreference: row.contactPreference as ContactPreference,
     displayName: employer.displayName,
   };
@@ -375,12 +381,13 @@ export async function revealContact(
 
 export type CreateRequirementInput = {
   /**
-   * Required the first time a person posts, because the reveal has to have
-   * something to show a candidate. Saved to the profile, so later postings
-   * do not ask again. Unverified since the identity change — recorded as an
-   * accepted consequence in ARCHITECTURE.md.
+   * Both required the first time a person posts, because the reveal has to
+   * have something to show a candidate. Saved to the profile, so later
+   * postings do not ask again. Unverified since the identity change —
+   * recorded as an accepted consequence in ARCHITECTURE.md.
    */
   contactPhone?: string | null | undefined;
+  contactEmail?: string | null | undefined;
   title: string;
   description: string;
   categoryPublicId: string;
@@ -402,15 +409,27 @@ export async function createRequirement(
 
   await enforceRateLimit('requirementCreate', author.publicId);
 
+  // First posting: capture whichever contact details are still missing. Both
+  // are asked together so the question is answered once, and the e-mail field
+  // arrives prefilled with the account address — one tap unless they want
+  // candidates pointed somewhere else.
+  const contactUpdate: { phone?: string; contactEmail?: string } = {};
+
   if (!author.hasContactPhone) {
     const contactPhone = input.contactPhone ? normalizePhone(input.contactPhone) : null;
     if (!contactPhone) throw errors.validation('errors.contactPhoneRequired');
+    contactUpdate.phone = contactPhone;
+  }
 
+  if (!author.hasContactEmail) {
+    const contactEmail = input.contactEmail?.trim().toLowerCase();
+    if (!contactEmail) throw errors.validation('errors.contactEmailRequired');
+    contactUpdate.contactEmail = contactEmail;
+  }
+
+  if (Object.keys(contactUpdate).length > 0) {
     try {
-      await prisma.person.update({
-        where: { id: author.id },
-        data: { phone: contactPhone },
-      });
+      await prisma.person.update({ where: { id: author.id }, data: contactUpdate });
     } catch (error) {
       if (isUniqueViolation(error)) throw errors.conflict('errors.phoneTaken');
       throw error;

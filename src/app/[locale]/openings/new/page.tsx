@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { getCurrentPerson } from '@/server/auth/session';
 import { getCategoryGroups } from '@/server/services/category.service';
+import { getOwnAccountEmail } from '@/server/services/person.service';
 import { getLocalityOptions } from '@/server/services/locality.service';
 import { PostRequirementForm } from '@/components/requirements/post-requirement-form';
 
@@ -28,14 +29,18 @@ export default async function NewRequirementPage({ params }: PageProps) {
   // Both lists are fetched here rather than in the form so the pickers are in
   // the first response: the brief asks posting to take under a minute, and a
   // form that cannot be filled in until two more requests land does not.
-  const [localities, categoryGroups] = await Promise.all([
+  const [localities, categoryGroups, accountEmail] = await Promise.all([
     getLocalityOptions(locale),
     getCategoryGroups(locale),
+    // Only read when it will actually be used as a prefill.
+    person.hasContactEmail ? Promise.resolve('') : getOwnAccountEmail(person),
   ]);
 
   return <PostRequirementForm
       localities={localities}
       categoryGroups={categoryGroups}
       needsContactPhone={!person.hasContactPhone}
+      needsContactEmail={!person.hasContactEmail}
+      accountEmail={accountEmail}
     />;
 }

@@ -65,8 +65,8 @@
     "tiersBody": "A loading worker and a chartered accountant get the same profile, the same recommendations, the same respect.",
     "trustTitle": "Backed by people who can be asked",
     "trustBody": "Every recommendation carries a real name, and members verified by KVVES Edakkara carry a badge their neighbours can check. Nothing here is an anonymous star rating.",
-    "ctaTitle": "Start with just your phone number",
-    "ctaBody": "No resume, no email, no fees. One code by SMS and you are in.",
+    "ctaTitle": "Start in under a minute",
+    "ctaBody": "Looking for work? Just browse — no account needed. Hiring? Sign up with an e-mail or Google.",
     "ctaAction": "Get started"
   },
   "auth": {
@@ -92,8 +92,8 @@
     "devCodeNotice": "Development build — no SMS is sent. Your code:",
     "continueWithGoogle": "Continue with Google",
     "googleHint": "Works once you have added Google to your account from your profile.",
-    "googleNotLinked": "That Google account is not attached to any Koode profile yet. Sign in with your mobile number first, then add Google from your profile.",
-    "googleFailed": "Google sign-in did not complete. Please try again, or use your mobile number.",
+    "googleNotLinked": "That Google account could not be used. Try again, or create an account with your e-mail.",
+    "googleFailed": "Google sign-in did not complete. Please try again, or use your e-mail and password.",
     "accountSuspendedNotice": "This account has been suspended.",
     "signInEmailSubtitle": "Only employers posting work need an account. Looking for work? Just browse.",
     "emailLabel": "E-mail",
@@ -115,7 +115,14 @@
     "pointNoSelling": "We do not sell your details to anyone, and we do not use advertising trackers.",
     "accept": "I understand and agree",
     "readPolicy": "Read the full privacy notice",
-    "versionNote": "Privacy notice version {version}"
+    "versionNote": "Privacy notice version {version}",
+    "v2": {
+      "intro": "Koode stores your name, the contact details you publish, and the work you do, so that local employers and workers can find each other.",
+      "pointContact": "Your contact number and e-mail are never shown in search results. They are revealed only when someone deliberately asks, and we keep a record of every time that happens.",
+      "pointRecommendations": "People may write recommendations about you. You will always be told who wrote one and what it says.",
+      "pointControl": "You can download everything we hold about you, or delete your account, at any time.",
+      "pointNoSelling": "We do not sell your details to anyone, and we do not use advertising trackers."
+    }
   },
   "requirements": {
     "listTitle": "Open requirements",
@@ -170,7 +177,9 @@
     "scopeLocal": "My area",
     "fieldContactPhone": "Contact number for candidates",
     "fieldContactPhoneHelp": "Shown only when a candidate deliberately asks for it. Saved to your account — you will not be asked again.",
-    "signInToApply": "Sign in to express interest"
+    "signInToApply": "Sign in to express interest",
+    "fieldContactEmail": "Contact e-mail for candidates",
+    "fieldContactEmailHelp": "Shown only when a candidate deliberately asks. Kept separate from your sign-in address, so you can point candidates somewhere else."
   },
   "profile": {
     "title": "Profile",
@@ -202,11 +211,11 @@
     "deleteWarning": "Your name and number are removed permanently. Recommendations written about you stay in the records without anything identifying you.",
     "deleteConfirm": "Yes, delete my account",
     "signInMethods": "Sign-in methods",
-    "googleLinkedAs": "Google is attached ({email}). You can sign in without an SMS.",
-    "linkGoogleHint": "Attach Google to sign in without waiting for an SMS. Your mobile number stays your identity.",
+    "googleLinkedAs": "Google is attached ({email}). You can sign in with one tap.",
+    "linkGoogleHint": "Attach Google to sign in with one tap instead of typing your password.",
     "linkGoogle": "Attach Google sign-in",
     "unlinkGoogle": "Remove Google",
-    "unlinkGoogleConfirm": "Google will no longer sign you in. Your mobile number keeps working as always.",
+    "unlinkGoogleConfirm": "Google will no longer sign you in. Your e-mail and password keep working.",
     "googleLinked": "Google sign-in attached.",
     "googleTaken": "That Google account is already attached to a different Koode profile."
   },
@@ -361,7 +370,8 @@
     "contactPreference": {
       "call": "Call",
       "whatsapp": "WhatsApp",
-      "either": "Either"
+      "either": "Either",
+      "email": "E-mail"
     },
     "relationshipContext": {
       "employed_them": "I employed them",
@@ -419,7 +429,8 @@
     "invalidCredentials": "That e-mail and password do not match.",
     "emailTaken": "An account with this e-mail already exists.",
     "phoneTaken": "That contact number is already on another account.",
-    "contactPhoneRequired": "Add a contact number so candidates can reach you."
+    "contactPhoneRequired": "Add a contact number so candidates can reach you.",
+    "contactEmailRequired": "Add a contact e-mail so candidates can reach you."
   },
   "pwa": {
     "installTitle": "Add Koode to your phone",

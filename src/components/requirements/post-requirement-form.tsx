@@ -33,11 +33,16 @@ export function PostRequirementForm({
   localities,
   categoryGroups,
   needsContactPhone,
+  needsContactEmail,
+  accountEmail,
 }: {
   localities: LocalityOption[];
   categoryGroups: CategoryGroup[];
-  /** True when the poster has no number on file yet — the field shows once. */
+  /** True when the poster has nothing on file yet — the fields show once. */
   needsContactPhone: boolean;
+  needsContactEmail: boolean;
+  /** Prefills the contact address, so confirming it is one tap. */
+  accountEmail: string;
 }) {
   const t = useTranslations('requirements');
   const tCommon = useTranslations('common');
@@ -102,6 +107,7 @@ export function PostRequirementForm({
     try {
       const result = await api.post<{ publicId: string }>('/api/requirements', {
         contactPhone: text('contactPhone') || null,
+        contactEmail: text('contactEmail') || null,
         title: text('title'),
         categoryPublicId: text('categoryPublicId'),
         localityPublicId: text('localityPublicId'),
@@ -141,6 +147,24 @@ export function PostRequirementForm({
       ) : null}
 
       <div className="mt-6 flex flex-col gap-5">
+        {needsContactEmail ? (
+          // Prefilled with the account address but stored separately, so
+          // changing where you sign in never silently changes what
+          // candidates see — and the login e-mail is never a reveal target.
+          <TextField
+            label={t('fieldContactEmail')}
+            help={t('fieldContactEmailHelp')}
+            name="contactEmail"
+            error={fieldMessage('contactEmail')}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            defaultValue={accountEmail}
+            maxLength={255}
+            required
+          />
+        ) : null}
+
         {needsContactPhone ? (
           // Candidates reach an employer by phone, so the first posting has
           // to put a number on file. Asked once, saved to the profile,

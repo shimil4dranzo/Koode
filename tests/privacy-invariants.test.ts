@@ -59,14 +59,16 @@ describe('phone numbers never leave the audited path', () => {
   it('only the listed services select a phone number', () => {
     const offenders = ALL_FILES.filter((file) => {
       if (ALLOWED_TO_SELECT_PHONE.has(relative(file))) return false;
-      // Matches `phone: true` inside a Prisma `select`, the only way a phone
-      // number gets read out of the database.
-      return /\bphone:\s*true\b/.test(read(file));
+      // Matches `phone: true` / `contactEmail: true` inside a Prisma
+      // `select` — the only ways an employer's contact details get read out
+      // of the database. Both are reveal-only.
+      return /\b(phone|contactEmail):\s*true\b/.test(read(file));
     }).map(relative);
 
     expect(
       offenders,
-      `These files select Person.phone but are not on the allow-list in this test.\n` +
+      `These files select a contact detail (phone / contactEmail) but are not\n` +
+        `on the allow-list in this test.\n` +
         `A phone number must never reach a list response, a Server Component's\n` +
         `props, or a client bundle. If the new use is genuinely the audited\n` +
         `reveal path, add it to ALLOWED_TO_SELECT_PHONE with a comment saying why.\n\n` +

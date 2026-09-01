@@ -38,6 +38,7 @@ export const POST = handler(async (request: NextRequest) => {
   const result = await createRequirement(
     {
       contactPhone: body.contactPhone,
+      contactEmail: body.contactEmail,
       title: body.title,
       description: body.description,
       categoryPublicId: body.categoryPublicId,

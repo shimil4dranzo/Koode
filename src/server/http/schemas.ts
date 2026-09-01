@@ -123,8 +123,9 @@ export const personSkillSchema = z.object({
  */
 export const createRequirementSchema = z
   .object({
-    /** Asked only when the poster has no number on file yet. */
+    /** Both asked only when the poster has nothing on file yet. */
     contactPhone: z.string().trim().max(20).nullish(),
+    contactEmail: z.string().trim().toLowerCase().email('errors.invalidEmail').max(255).nullish(),
     title: z.string().trim().min(3).max(160),
     description: z.string().trim().max(4000).default(''),
     categoryPublicId: publicIdSchema,

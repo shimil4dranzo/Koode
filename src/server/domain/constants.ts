@@ -54,9 +54,10 @@ export type PayPeriod = (typeof PAY_PERIODS)[number];
 /**
  * How the employer prefers to be reached. `whatsapp` is a stated preference
  * only — Stage 1 has no WhatsApp integration, it simply tells the candidate
- * which app to open after revealing the number.
+ * which app to open after revealing the number. `email` suits the office and
+ * professional tiers, where a phone call mid-shift is the wrong opening move.
  */
-export const CONTACT_PREFERENCES = ['call', 'whatsapp', 'either'] as const;
+export const CONTACT_PREFERENCES = ['call', 'whatsapp', 'email', 'either'] as const;
 export type ContactPreference = (typeof CONTACT_PREFERENCES)[number];
 
 export const REQUIREMENT_STATUSES = ['open', 'filled', 'closed', 'expired'] as const;

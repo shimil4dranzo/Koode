@@ -305,6 +305,8 @@ async function seedSamplePeople(
         publicId: createId(),
         phone: person.phone,
         email: person.email,
+        // Same address doubles as the published contact e-mail for the sample.
+        contactEmail: person.email,
         // Development convenience only: lets anyone running the seed sign in
         // as a sample person. NODE_ENV=production skips sample people wholesale.
         passwordHash: await hashPassword('koode1234'),
@@ -315,7 +317,7 @@ async function seedSamplePeople(
         claimedAt: new Date(),
         consents: {
           create: {
-            consentVersion: '2026-09-01.1',
+            consentVersion: '2026-09-02.1',
             purpose: 'registration',
             locale: 'ml',
           },
@@ -390,11 +392,20 @@ async function seedSampleActivity(
   // Deliberately spans the tiers: counter staff, an electrician and an
   // accountant, so the taxonomy's claim that they are the same shape of record
   // is visible on the listing page rather than only in the schema.
+  /**
+   * A deliberately BILINGUAL mix.
+   *
+   * Postings are stored exactly as the employer typed them — no job board
+   * translates user content, and Koode does not either. But Edakkara is
+   * bilingual, so a realistic listing is a mix, and seeding only Malayalam
+   * made the English site look broken to anyone browsing it. Roughly half
+   * and half, spread across the tiers.
+   */
   const requirements = [
     {
-      title: 'ഹാർഡ്‌വെയർ കടയിൽ കൗണ്ടർ ജീവനക്കാരൻ',
+      title: 'Counter staff for a hardware shop',
       description:
-        'രാവിലെ 9 മുതൽ വൈകിട്ട് 7 വരെ. ബില്ലിംഗ് അറിയണം. മലയാളം എഴുതാനും വായിക്കാനും അറിയണം.',
+        '9am to 7pm, Sunday off. Billing experience preferred. Must be able to read and write Malayalam and English.',
       categorySlug: 'sales-counter-staff',
       localityId: edakkara,
       engagementType: 'permanent',
@@ -402,6 +413,7 @@ async function seedSampleActivity(
       payMax: 15000,
       payPeriod: 'monthly',
       vacancies: 1,
+      contactPreference: 'call',
     },
     {
       title: 'വീട്ടിലെ വയറിംഗ് ജോലിക്ക് ഇലക്ട്രീഷ്യൻ',
@@ -413,10 +425,12 @@ async function seedSampleActivity(
       payMax: null,
       payPeriod: 'daily',
       vacancies: 2,
+      contactPreference: 'call',
     },
     {
-      title: 'ജി.എസ്.ടി. ഫയലിംഗിന് അക്കൗണ്ടന്റ്',
-      description: 'മാസത്തിൽ കുറച്ച് ദിവസം മതി. ടാലി അറിയുന്നവർ അഭികാമ്യം.',
+      title: 'Accountant for GST filing (part-time)',
+      description:
+        'A few days a month. Tally experience preferred. Work can be done from our office in Vazhikkadavu.',
       categorySlug: 'accountant',
       localityId: vazhikkadavu,
       engagementType: 'part_time',
@@ -424,6 +438,44 @@ async function seedSampleActivity(
       payMax: null,
       payPeriod: null,
       vacancies: 1,
+      contactPreference: 'email',
+    },
+    {
+      title: 'ചരക്ക് ഇറക്കാൻ ആളെ വേണം',
+      description: 'ആഴ്ചയിൽ രണ്ട് ദിവസം, രാവിലെ മാത്രം. ദിവസക്കൂലി അന്നുതന്നെ.',
+      categorySlug: 'loading-unloading',
+      localityId: edakkara,
+      engagementType: 'one_day',
+      payMin: 900,
+      payMax: 1100,
+      payPeriod: 'daily',
+      vacancies: 3,
+      contactPreference: 'call',
+    },
+    {
+      title: 'Maths tutor for Class 9 and 10',
+      description:
+        'Evenings, four days a week, at the student\'s home in Edakkara. B.Ed or teaching experience preferred.',
+      categorySlug: 'teacher',
+      localityId: edakkara,
+      engagementType: 'part_time',
+      payMin: 6000,
+      payMax: 8000,
+      payPeriod: 'monthly',
+      vacancies: 1,
+      contactPreference: 'either',
+    },
+    {
+      title: 'തയ്യൽ കടയിൽ സഹായി',
+      description: 'പരിചയം വേണമെന്നില്ല, പഠിപ്പിക്കാം. സ്ഥിരം ജോലി.',
+      categorySlug: 'tailor',
+      localityId: vazhikkadavu,
+      engagementType: 'permanent',
+      payMin: 9000,
+      payMax: 11000,
+      payPeriod: 'monthly',
+      vacancies: 1,
+      contactPreference: 'call',
     },
   ];
 
@@ -444,7 +496,7 @@ async function seedSampleActivity(
         payMin: requirement.payMin,
         payMax: requirement.payMax,
         payPeriod: requirement.payPeriod,
-        contactPreference: 'call',
+        contactPreference: requirement.contactPreference,
         vacancies: requirement.vacancies,
         status: 'open',
         expiresAt: in30Days,
@@ -463,7 +515,7 @@ async function seedSampleActivity(
     },
     {
       subject: accountant,
-      note: 'മൂന്ന് വർഷമായി ഞങ്ങളുടെ കടയുടെ ജി.എസ്.ടി. ഫയലിംഗ് ചെയ്യുന്നു. ഒരു തവണ പോലും വൈകിയിട്ടില്ല.',
+      note: 'Has handled our shop GST filing for three years. Never once filed late, and explains things in plain terms.',
       relationshipContext: 'employed_them',
       categorySlug: 'accountant',
     },

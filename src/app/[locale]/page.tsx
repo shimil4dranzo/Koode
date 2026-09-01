@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
 import { LogoMark } from '@/components/logo';
+import { TownscapeArt, VouchNetworkArt } from '@/components/art';
 import {
   IconArrowRight,
   IconBriefcase,
@@ -149,7 +150,13 @@ export default async function HomePage({ params }: PageProps) {
                 </Card>
               ))}
             </div>
-          ) : null}
+          ) : (
+            // Cold start: the vouch panel has nothing real to show, so the
+            // idea gets drawn instead of faked with sample quotes.
+            <div className="hidden lg:flex lg:items-center lg:justify-center">
+              <VouchNetworkArt className="w-full max-w-xs text-brand-600" />
+            </div>
+          )}
         </div>
       </section>
 
@@ -267,8 +274,12 @@ export default async function HomePage({ params }: PageProps) {
       </section>
 
       {/* ---- Final call ----------------------------------------------------- */}
-      <section className="border-t border-ink-200 bg-brand-700">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
+      <section className="relative overflow-hidden border-t border-ink-200 bg-brand-700">
+        {/* The street, drawn into the band rather than sat above it. Low
+            opacity so the heading keeps its contrast — the text sits on
+            brand-700, and this never lightens that ground. */}
+        <TownscapeArt className="pointer-events-none absolute inset-x-0 bottom-0 h-48 w-full text-white/20" />
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <LogoMark className="size-12" />
             <div>

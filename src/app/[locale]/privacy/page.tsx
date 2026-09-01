@@ -34,10 +34,10 @@ export default async function PrivacyPage({ params }: PageProps) {
   ]);
 
   const points = [
-    t('pointPhone'),
-    t('pointRecommendations'),
-    t('pointControl'),
-    t('pointNoSelling'),
+    t('v2.pointContact'),
+    t('v2.pointRecommendations'),
+    t('v2.pointControl'),
+    t('v2.pointNoSelling'),
   ];
 
   return (
@@ -47,7 +47,7 @@ export default async function PrivacyPage({ params }: PageProps) {
         {t('versionNote', { version: CURRENT_CONSENT_VERSION })}
       </p>
 
-      <p className="mt-5 text-lg">{t('intro')}</p>
+      <p className="mt-5 text-lg">{t('v2.intro')}</p>
 
       <ul className="mt-5 flex list-disc flex-col gap-4 ps-5">
         {points.map((point) => (

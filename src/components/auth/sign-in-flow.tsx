@@ -388,7 +388,7 @@ export function SignInFlow({
  * the first registration attempt instead of silently recording the wrong
  * version. Bump together with src/server/consent/versions.ts.
  */
-const CURRENT_CONSENT_VERSION_CLIENT = '2026-09-01.1';
+const CURRENT_CONSENT_VERSION_CLIENT = '2026-09-02.1';
 
 /**
  * The consent text, rendered from the same keys `CONSENT_VERSIONS` records so
@@ -399,12 +399,12 @@ function ConsentNotice() {
 
   return (
     <div className="rounded-card border border-ink-200 bg-ink-100 p-4 text-sm">
-      <p>{t('intro')}</p>
+      <p>{t('v2.intro')}</p>
       <ul className="mt-3 flex list-disc flex-col gap-2 ps-5">
-        <li>{t('pointPhone')}</li>
-        <li>{t('pointRecommendations')}</li>
-        <li>{t('pointControl')}</li>
-        <li>{t('pointNoSelling')}</li>
+        <li>{t('v2.pointContact')}</li>
+        <li>{t('v2.pointRecommendations')}</li>
+        <li>{t('v2.pointControl')}</li>
+        <li>{t('v2.pointNoSelling')}</li>
       </ul>
     </div>
   );
