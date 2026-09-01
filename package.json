@@ -11,7 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -25,7 +25,8 @@
     "verify": "npm run typecheck && npm run lint && npm run db:normalize -- --check && npm run test",
     "db:normalize": "tsx scripts/normalize-migrations.ts",
     "bundle:report": "tsx scripts/bundle-report.ts",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "lint:fix": "eslint . --fix"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -43,7 +44,6 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.4.0",

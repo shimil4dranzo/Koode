@@ -1,24 +1,27 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { FlatCompat } from '@eslint/eslintrc';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypeScript from 'eslint-config-next/typescript';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({ baseDirectory: __dirname });
-
+/**
+ * ESLint flat config.
+ *
+ * `eslint-config-next` 16 ships flat configs directly. Do NOT wrap these in
+ * `FlatCompat` — running the flat config through the eslintrc compatibility
+ * layer makes ESLint try to JSON.stringify a plugin object that references
+ * itself, and every lint run dies with "Converting circular structure to JSON".
+ */
 const config = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...nextCoreWebVitals,
+  ...nextTypeScript,
   {
     ignores: [
       'node_modules/**',
       '.next/**',
       'out/**',
       'coverage/**',
-      'src/generated/**',
       'public/sw.js',
       'playwright-report/**',
       'test-results/**',
+      'next-env.d.ts',
     ],
   },
   {
@@ -27,13 +30,14 @@ const config = [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // The domain layer must not reach for `any` — these are the rules that matter.
+      // The domain layer must not reach for `any` — these are the rules that
+      // actually matter, and an `any` there hides a real modelling mistake.
       '@typescript-eslint/no-explicit-any': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
   {
-    // Scripts and seeds are operator tools; console output is the whole point.
+    // Scripts, seeds and the SMS stub are operator tools; printing is the point.
     files: ['scripts/**/*.ts', 'prisma/**/*.ts', 'src/server/sms/**/*.ts'],
     rules: { 'no-console': 'off' },
   },
