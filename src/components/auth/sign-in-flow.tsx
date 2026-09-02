@@ -173,6 +173,17 @@ export function SignInFlow({
     </div>
   );
 
+  /**
+   * Google sign-in, or an explanation of where it went.
+   *
+   * The button is gated on GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET being
+   * present. Hiding it in production is right — an option that cannot work
+   * should not be offered — but hiding it in development with no trace is how
+   * a fully-wired feature gets reported as missing. The notice below is
+   * development-only, and NODE_ENV is inlined at build time, so it is not in
+   * the production bundle at all. Deliberately untranslated: it addresses
+   * whoever is running the dev server, not a user of the app.
+   */
   const googleButton = googleEnabled ? (
     <>
       <div className="flex items-center gap-3" aria-hidden="true">
@@ -192,6 +203,13 @@ export function SignInFlow({
         {t('continueWithGoogle')}
       </a>
     </>
+  ) : process.env.NODE_ENV === 'development' ? (
+    <p className="rounded-lg border border-dashed border-ink-300 px-4 py-3 text-sm text-ink-700">
+      <strong className="font-medium">Google sign-in is hidden.</strong> It is
+      built and wired, but <code>GOOGLE_CLIENT_ID</code> and{' '}
+      <code>GOOGLE_CLIENT_SECRET</code> are not set in <code>.env.local</code>.
+      Add them and restart the dev server. (Development-only notice.)
+    </p>
   ) : null;
 
   return (
