@@ -3,7 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
-import { LogoMark } from '@/components/logo';
+import { LogoMark, LogoWordmark, SmileGlyph } from '@/components/logo';
 import { TownscapeArt } from '@/components/art';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { VouchGraph3d } from '@/components/three/vouch-graph-3d';
@@ -53,9 +53,10 @@ export default async function HomePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [t, tAnchor, tEngagement, counts, tiers, vouches, latest] =
+  const [t, tCommon, tAnchor, tEngagement, counts, tiers, vouches, latest] =
     await Promise.all([
       getTranslations('home'),
+      getTranslations('common'),
       getTranslations('anchor'),
       getTranslations('taxonomy.engagementType'),
       getPlatformCounts(),
@@ -83,141 +84,164 @@ export default async function HomePage({ params }: PageProps) {
       <ScrollReveal />
       <PageGlow />
 
-      {/* ---- Hero: the launch banner ------------------------------------
+      {/* ---- Hero: search is the offer ------------------------------------
 
-        Full-bleed and dark, and the only dark band in the app. Two reasons,
-        both practical rather than fashionable: the WebGL graph behind the
-        headline is drawn with additive blending, which glows on near-black
-        and disappears on white; and a single dark band gives the launch a
-        moment of stagecraft without committing the pages people actually
-        work in — read outdoors, on cheap screens — to a dark theme.
+        Rebuilt around the one thing a marketplace hero has to do: get somebody
+        into a search. Everything here is arranged behind that — the display
+        type names the product, the search field is the primary control, the
+        chips are the shortcut for people who do not know what to type, and the
+        four proof points answer "why this and not a WhatsApp group" without a
+        paragraph.
 
-        The graph is not decoration. Every point is a person on the platform
-        and every line is a real recommendation, counted from the database, so
-        the banner is a portrait of the thing the product accumulates. On a
-        device that cannot afford WebGL the same idea arrives as a self-drawing
-        SVG, and the text above it is unchanged either way.
+        Light rather than the dark band it replaced. The dark version looked
+        striking and buried the actual entry point; on a phone the search field
+        was below the fold behind two paragraphs of argument. The argument now
+        lives one section down and on the About page, where somebody who wants
+        it can find it and somebody who wants a job never has to read it.
       */}
-      <section className="relative isolate overflow-hidden bg-night-900 text-white">
-        {/* The backdrop. aria-hidden inside; it carries no information that
-            is not also written in the copy. */}
-        <div className="pointer-events-none absolute inset-0">
-          <VouchGraph3d
-            variant="hero"
-            peopleCount={counts.activePeople}
-            vouchCount={counts.recommendations}
-            className="size-full"
-            fallbackClassName="absolute inset-0 m-auto h-auto w-full max-w-3xl opacity-40 text-brand-500"
-          />
-        </div>
+      <section className="mx-auto w-full max-w-6xl px-4 pb-6 pt-8 lg:pt-12">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div data-reveal="lift">
+            <p className="flex items-center gap-2 text-base font-medium text-ink-700">
+              {t('heroKicker')}
+              <SmileGlyph className="h-3 w-6 text-brand-600" />
+            </p>
 
-        {/*
-          Scrims, not opacity on the canvas: the graph stays bright where
-          there is no text and is pushed down where there is. Without this the
-          headline sits on a moving field and the contrast changes frame to
-          frame, which is how animated heroes end up unreadable.
-        */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-night-900 via-night-900/70 to-night-900/20 lg:via-night-900/55 lg:to-transparent"
-        />
-        {/* Hands off to the light page below instead of stopping at an edge. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-paper"
-        />
+            {/* "Meet" then the mark itself, rather than the name set in type:
+                the wordmark is the asset, and using it here is what makes the
+                header, the banner and the installed icon read as one thing. */}
+            <p className="mt-3 text-4xl font-semibold uppercase tracking-tight text-navy-900 sm:text-5xl">
+              {t('heroMeet')}
+            </p>
+            <LogoWordmark className="mt-2 w-56 sm:w-72" />
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 pb-12 pt-10 lg:pb-28 lg:pt-20">
-          <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_1fr]">
-            <div data-reveal="lift">
-              <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-night-300">
-                <LogoMark className="size-5" />
-                {t('heroEyebrow')}
-              </p>
-
-              <h1 className="mt-5 max-w-xl text-4xl font-semibold sm:text-5xl">
-                {t('heroTitle')}
-              </h1>
-              <p className="mt-5 max-w-xl text-lg text-night-300">{t('heroBody')}</p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/openings"
-                  className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-lg font-medium text-night-900 hover:bg-brand-100"
-                >
-                  {t('findWork')}
-                  <IconArrowRight className="size-5" />
-                </Link>
-                <Link
-                  href="/openings/new"
-                  className="inline-flex min-h-14 items-center justify-center rounded-lg border border-white/30 px-6 text-lg font-medium text-white hover:bg-white/10"
-                >
-                  {t('postWork')}
-                </Link>
-              </div>
-
-              <dl className="mt-8 grid max-w-md grid-cols-3 gap-4 border-t border-white/20 pt-5 lg:mt-10">
-                {stats.map((stat) => (
-                  <div key={stat.label}>
-                    <dd className="text-3xl font-semibold tabular-nums">{stat.value}</dd>
-                    <dt className="mt-0.5 text-sm text-night-300">{stat.label}</dt>
-                  </div>
-                ))}
-              </dl>
-
-              <p className="mt-6 max-w-sm text-sm text-night-300 lg:mt-8">
-                {t('heroGraphCaption')}
-              </p>
-            </div>
+            <p className="mt-5 max-w-lg text-lg text-ink-700">{t('heroBody')}</p>
 
             {/*
-              The proof: the latest real vouches, verbatim. This panel IS the
-              product — a competitor can screenshot the layout, not the graph.
-              Renders nothing during cold start rather than showing samples.
+              The primary control. A plain GET form to the openings page, so it
+              works before any JavaScript arrives and the result is a URL that
+              can be sent to somebody over WhatsApp.
             */}
-            {vouches.length > 0 ? (
-              <div className="flex flex-col gap-4 lg:pt-10" data-reveal="swing">
-                <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-night-300">
-                  <IconVouch className="size-4.5 text-brand-500" />
-                  {t('vouchPanelTitle')}
+            <form action={`/${locale}/openings`} method="get" className="mt-7 max-w-lg">
+              <label htmlFor="hero-search" className="block text-base font-medium">
+                {t('heroSearchLabel')}
+              </label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  id="hero-search"
+                  type="search"
+                  name="q"
+                  placeholder={t('heroSearchPlaceholder')}
+                  className="min-h-14 w-full rounded-lg border border-ink-300 bg-paper-raised px-4 text-lg"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-14 shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-6 text-lg font-medium text-white transition-colors hover:bg-brand-700"
+                >
+                  {tCommon('search')}
+                  <IconArrowRight className="size-5" />
+                </button>
+              </div>
+            </form>
+
+            {/* Shortcuts for the far more common case: no idea what to type. */}
+            {tiers.length > 0 ? (
+              <div className="mt-5 max-w-lg">
+                <p className="text-sm font-medium uppercase tracking-wide text-ink-500">
+                  {t('heroPopular')}
                 </p>
-
-                {vouches.map((vouch) => (
-                  <div
-                    key={vouch.subjectPublicId + vouch.createdAt}
-                    // Translucent rather than a solid card: the graph stays
-                    // faintly visible through the panel, which is what makes
-                    // the quotes read as sitting inside the network.
-                    className="rounded-card border border-white/20 bg-night-800/70 p-4 backdrop-blur-sm sm:p-5"
-                  >
-                    <blockquote className="line-clamp-3 border-s-4 border-brand-500 ps-3 text-base text-white">
-                      {vouch.note}
-                    </blockquote>
-
-                    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-night-300">
-                      <span className="font-medium text-white">{vouch.referrerName}</span>
-                      {vouch.referrerIsVerifiedMember ? (
-                        <Badge tone="verified" glyph="✓">
-                          {tAnchor('verified')}
-                        </Badge>
-                      ) : null}
-                      <span aria-hidden="true">→</span>
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {tiers.map((tier) => (
+                    <li key={tier.publicId}>
                       <Link
-                        href={`/people/${vouch.subjectPublicId}`}
-                        className="text-white underline underline-offset-2 hover:text-brand-100"
+                        href={`/openings?category=${tier.publicId}`}
+                        className="inline-flex min-h-touch items-center rounded-full border border-ink-300 bg-paper-raised px-4 text-base transition-colors hover:border-brand-600 hover:text-brand-700"
                       >
-                        {vouch.subjectName}
+                        {tier.label}
                       </Link>
-                      {vouch.categoryLabel ? (
-                        <span>· {vouch.categoryLabel}</span>
-                      ) : null}
-                    </p>
-                  </div>
-                ))}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
           </div>
+
+          {/*
+            The right column is the product, not a picture of it: real openings
+            from the database in a device frame. A mock screenshot would go
+            stale the first time the card design changed, and would be showing
+            invented jobs on a page whose entire argument is that its listings
+            are real.
+          */}
+          <div className="mx-auto w-full max-w-sm lg:mx-0" data-reveal="swing">
+            <div className="rounded-[2rem] border-8 border-navy-900 bg-paper-raised p-3 shadow-lg">
+              <p className="px-1 pb-2 pt-1">
+                <LogoWordmark className="w-24" />
+              </p>
+              {latest.items.length > 0 ? (
+                <ol className="flex flex-col gap-2">
+                  {latest.items.slice(0, 3).map((item) => (
+                    <li
+                      key={item.publicId}
+                      className="rounded-lg border border-ink-200 px-3 py-2.5"
+                    >
+                      <Link
+                        href={`/openings/${item.publicId}`}
+                        className="text-base font-medium hover:text-brand-700"
+                      >
+                        {item.title}
+                      </Link>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-ink-700">
+                        <span className="inline-flex items-center gap-1">
+                          <IconMapPin className="size-4 text-ink-500" />
+                          {item.localityLabel}
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>{tEngagement(item.engagementType)}</span>
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
+              <Link
+                href="/openings"
+                className="mt-2 flex min-h-touch items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 font-medium text-white hover:bg-brand-700"
+              >
+                {t('findWork')}
+                <IconArrowRight className="size-4.5" />
+              </Link>
+            </div>
+          </div>
         </div>
+
+        {/* Four proof points, in the order somebody actually asks them. */}
+        <ul className="mt-10 grid gap-4 border-t border-ink-200 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: IconShield, label: t('featureVerified') },
+            { icon: IconMapPin, label: t('featureNearby') },
+            { icon: IconStore, label: t('featureLocal') },
+            { icon: IconVouch, label: t('featureEveryone') },
+          ].map((feature, index) => {
+            const FeatureIcon = feature.icon;
+            return (
+              <li
+                key={feature.label}
+                className="flex items-center gap-3"
+                data-reveal="card"
+                style={{ '--reveal-delay': `${index * 70}ms` } as StyleWithVars}
+              >
+                <FeatureIcon className="size-7 shrink-0 text-brand-600" aria-hidden="true" />
+                <span className="text-base font-medium">{feature.label}</span>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* The promise, said plainly. */}
+        <p className="mt-8 inline-flex items-center gap-3 rounded-full bg-navy-900 px-5 py-3 text-base font-medium text-white">
+          <SmileGlyph className="h-3 w-6 text-brand-500" />
+          {t('heroTagline')}
+        </p>
       </section>
 
       {/*
@@ -333,8 +357,16 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* ---- How it works: three columns instead of a tower ---------------- */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-10">
+      {/* ---- How it works: three columns instead of a tower ----------------
+
+        Navy, and the only dark band left on the page. The graph is drawn with
+        additive blending, which needs a dark ground to glow on — it used to
+        get that from the hero, and when the hero went light this section is
+        where it belongs anyway: beside the three steps that explain what the
+        graph is showing, rather than behind a headline as decoration.
+      */}
+      <section className="border-y border-navy-800 bg-navy-900 text-white">
+        <div className="mx-auto w-full max-w-6xl px-4 py-12">
         <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
           {t('howItWorksTitle')}
         </h2>
@@ -353,17 +385,17 @@ export default async function HomePage({ params }: PageProps) {
                 as="li"
                 data-reveal="card"
                 style={{ '--reveal-delay': `${index * 90}ms` } as StyleWithVars}
-                className="flex h-full gap-4"
+                className="flex h-full gap-4 border-white/20 bg-navy-800/70"
               >
-              <span
-                aria-hidden="true"
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-100 font-semibold text-brand-700"
-              >
-                {index + 1}
-              </span>
+                <span
+                  aria-hidden="true"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-500 font-semibold text-navy-900"
+                >
+                  {index + 1}
+                </span>
                 <div>
-                  <h3 className="font-medium">{step.title}</h3>
-                  <p className="mt-1 text-ink-700">{step.body}</p>
+                  <h3 className="font-medium text-white">{step.title}</h3>
+                  <p className="mt-1 text-navy-100">{step.body}</p>
                 </div>
               </Card>
             ))}
@@ -382,9 +414,18 @@ export default async function HomePage({ params }: PageProps) {
             className="mx-auto w-64 shrink-0 text-brand-600 lg:w-80"
           />
         </div>
+        </div>
       </section>
 
-      {/* ---- Trust: who stands behind this -------------------------------- */}
+      {/* ---- Trust: who stands behind this --------------------------------
+
+        The claim, the evidence for it, and the count — together, because the
+        claim on its own is just a sentence anyone could write. The quotes are
+        the strongest thing this product has and were previously stacked beside
+        the hero, where they competed with the search field for the one glance
+        a visitor gives a page. Here they land after somebody has seen the
+        listings and is deciding whether to believe them.
+      */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-10">
         <Card className="flex flex-col gap-4 sm:flex-row sm:items-center" data-reveal="lift">
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-verify-100 text-verify-600">
@@ -394,7 +435,56 @@ export default async function HomePage({ params }: PageProps) {
             <h2 className="text-lg font-semibold">{t('trustTitle')}</h2>
             <p className="mt-1 text-ink-700">{t('trustBody')}</p>
           </div>
+          <dl className="flex shrink-0 gap-6 sm:border-s sm:border-ink-200 sm:ps-6">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dd className="text-2xl font-semibold tabular-nums">{stat.value}</dd>
+                <dt className="mt-0.5 text-sm text-ink-700">{stat.label}</dt>
+              </div>
+            ))}
+          </dl>
         </Card>
+
+        {vouches.length > 0 ? (
+          <div className="mt-4">
+            <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-ink-500">
+              <IconVouch className="size-4.5 text-brand-600" />
+              {t('vouchPanelTitle')}
+            </p>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              {vouches.map((vouch, index) => (
+                <Card
+                  as="li"
+                  key={vouch.subjectPublicId + vouch.createdAt}
+                  data-reveal="card"
+                  style={{ '--reveal-delay': `${index * 80}ms` } as StyleWithVars}
+                >
+                  <blockquote className="line-clamp-3 border-s-4 border-brand-500 ps-3 text-base">
+                    {vouch.note}
+                  </blockquote>
+                  <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-700">
+                    <span className="font-medium text-ink-900">{vouch.referrerName}</span>
+                    {vouch.referrerIsVerifiedMember ? (
+                      <Badge tone="verified" glyph="\u2713">
+                        {tAnchor('verified')}
+                      </Badge>
+                    ) : null}
+                    <span aria-hidden="true">\u2192</span>
+                    <Link
+                      href={`/people/${vouch.subjectPublicId}`}
+                      className="underline underline-offset-2 hover:text-brand-700"
+                    >
+                      {vouch.subjectName}
+                    </Link>
+                    {vouch.categoryLabel ? (
+                      <span className="text-ink-500">\u00b7 {vouch.categoryLabel}</span>
+                    ) : null}
+                  </p>
+                </Card>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
 
       {/* ---- Final call ----------------------------------------------------- */}

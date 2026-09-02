@@ -123,6 +123,16 @@ function toSummary(row: SummaryRow, locale: string): RequirementSummary {
 // ---------------------------------------------------------------------------
 
 export type SearchInput = {
+  /**
+   * Free text, matched against the title and description.
+   *
+   * Deliberately a plain LIKE rather than MySQL full-text: the corpus is
+   * bilingual, and full-text indexing tokenises on word boundaries that
+   * Malayalam does not have — a FULLTEXT index would quietly match English
+   * postings well and Malayalam ones badly, which is exactly the wrong bias
+   * for this audience. A substring match treats both scripts identically.
+   */
+  q?: string | undefined;
   localityPublicId?: string | undefined;
   categoryPublicId?: string | undefined;
   engagementType?: EngagementType | undefined;
@@ -158,6 +168,17 @@ export async function searchRequirements(input: SearchInput): Promise<SearchResu
     hiddenAt: null,
     expiresAt: { gt: now },
   };
+
+  // Trimmed, length-capped, and only applied when something is left: an empty
+  // or whitespace `q` must behave exactly like no `q` at all, or a stray space
+  // in the URL silently returns nothing.
+  const text = input.q?.trim().slice(0, 80);
+  if (text) {
+    where.OR = [
+      { title: { contains: text } },
+      { description: { contains: text } },
+    ];
+  }
 
   if (input.localityPublicId) {
     const localityId = await resolveLocalityId(input.localityPublicId);

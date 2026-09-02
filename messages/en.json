@@ -74,7 +74,17 @@
     "heroGraphCaption": "A picture of the network Koode builds: people, and the recommendations that connect them.",
     "mismatchTitle": "The shortage is not of work",
     "mismatchBody": "People looking for work and employers looking for people are both searching, and neither can see the other. Koode closes that gap.",
-    "mismatchLink": "Why Koode exists"
+    "mismatchLink": "Why Koode exists",
+    "heroKicker": "The better way is here",
+    "heroMeet": "Meet",
+    "heroSearchLabel": "Search jobs near you",
+    "heroSearchPlaceholder": "Search jobs, roles or keywords",
+    "heroPopular": "Popular right now",
+    "heroTagline": "Local jobs. Real opportunities. Better lives.",
+    "featureVerified": "Verified job listings",
+    "featureNearby": "Jobs near your location",
+    "featureLocal": "Local businesses hiring",
+    "featureEveryone": "Opportunities for everyone"
   },
   "auth": {
     "signInTitle": "Sign in to Koode",
@@ -186,7 +196,9 @@
     "fieldContactPhoneHelp": "Shown only when a candidate deliberately asks for it. Saved to your account — you will not be asked again.",
     "signInToApply": "Sign in to express interest",
     "fieldContactEmail": "Contact e-mail for candidates",
-    "fieldContactEmailHelp": "Shown only when a candidate deliberately asks. Kept separate from your sign-in address, so you can point candidates somewhere else."
+    "fieldContactEmailHelp": "Shown only when a candidate deliberately asks. Kept separate from your sign-in address, so you can point candidates somewhere else.",
+    "searchLabel": "Search openings",
+    "searchPlaceholder": "Job, role or keyword"
   },
   "profile": {
     "title": "Profile",

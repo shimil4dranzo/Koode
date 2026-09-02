@@ -9,19 +9,29 @@
  * contrast, big tap targets, and meaning never carried by colour alone.
  */
 @theme {
+  /* Navy, from the wordmark.
+
+     The logo is navy letters with a green smile, so navy is the ink of the
+     brand and green is its accent — not two greens. Text stays on the ink-*
+     scale below; these are for the mark, the display type in the hero, and
+     the dark bands. */
+  --color-navy-900: oklch(0.24 0.065 258);
+  --color-navy-800: oklch(0.31 0.070 258);
+  --color-navy-100: oklch(0.93 0.020 258);
+
   /* Ink and paper — the "Almoayyed" recipe, cut in green.
 
      The neutrals are tinted toward the ground's green (hue 160) rather than
      the old blue-grey, so text and rules sit inside the palette instead of on
      top of it. Lightness values are unchanged where they could be; the two
      that moved, moved because they had to (see below). */
-  --color-ink-900: oklch(0.19 0.018 160);
-  --color-ink-700: oklch(0.36 0.020 160);
+  --color-ink-900: oklch(0.21 0.035 258);
+  --color-ink-700: oklch(0.38 0.030 258);
 
   /* Darkened from 0.53. The gradient ground is a shade deeper than the flat
      near-white it replaced, and at the old value captions measured 3.61:1
      against it — under the 4.5 floor. */
-  --color-ink-500: oklch(0.47 0.020 160);
+  --color-ink-500: oklch(0.48 0.028 258);
 
   /* Darkened from 0.64, for the same reason and more sharply: chips and switch
      tracks put this border directly on the gradient ground, where the old
@@ -32,10 +42,10 @@
      mid-tone the gradient passes through, and a mid-tone token on a mid-tone
      ground has nowhere to go: swept from 0.30 to 0.80, no veil value brought
      ink-500 or ink-300 to their floors. The tokens had to move. */
-  --color-ink-300: oklch(0.56 0.018 160);
+  --color-ink-300: oklch(0.57 0.024 258);
 
-  --color-ink-200: oklch(0.74 0.013 160);
-  --color-ink-100: oklch(0.92 0.010 160);
+  --color-ink-200: oklch(0.75 0.018 258);
+  --color-ink-100: oklch(0.93 0.014 258);
 
   /* The page ground.
 

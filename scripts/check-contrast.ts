@@ -157,6 +157,17 @@ const PAIRS: Pair[] = [
   // The hero band. Its whole reason for being dark is that the WebGL graph
   // needs a dark ground, so every pairing on it is measured rather than
   // assumed — light text on dark is easy to get subtly wrong.
+  // The wordmark and the display type it sets the tone for.
+  { fg: 'navy-900', bg: 'paper', where: 'wordmark / display heading', kind: 'text' },
+  { fg: 'navy-900', bg: 'paper-raised', where: 'wordmark on a card', kind: 'text' },
+  { fg: 'white', bg: 'navy-900', where: 'inverse wordmark / dark band', kind: 'text' },
+  { fg: 'navy-100', bg: 'navy-900', where: 'secondary text on a navy band', kind: 'text' },
+  { fg: 'brand-600', bg: 'navy-900', where: 'the smile on a dark ground', kind: 'ui' },
+
+  { fg: 'white', bg: 'navy-800', where: 'step title on the navy band', kind: 'text' },
+  { fg: 'navy-100', bg: 'navy-800', where: 'step body on the navy band', kind: 'text' },
+  { fg: 'navy-900', bg: 'brand-500', where: 'step number on its badge', kind: 'text' },
+
   { fg: 'white', bg: 'night-900', where: 'hero headline', kind: 'text' },
   { fg: 'night-300', bg: 'night-900', where: 'hero body and stat labels', kind: 'text' },
   { fg: 'white', bg: 'night-800', where: 'text on a hero vouch card', kind: 'text' },

@@ -1,39 +1,131 @@
 import { cn } from '@/lib/cn';
 
 /**
- * The Koode mark.
+ * The Koode wordmark: "koode" in navy, with a green smile under the two o's.
  *
- * A rounded Kerala-green tile with a "K" drawn in rounded strokes — the same
- * motif as the installed PWA icon, so the tab, the home-screen icon and the
- * header all read as one thing. Inline SVG with no <defs> ids, so it can
- * appear any number of times on a page without id collisions, and the gradient
- * lives on the wrapping element where CSS can do it.
+ * Drawn as geometric paths rather than set in a typeface, for two reasons.
+ * A logo must be identical everywhere, and text depends on a font actually
+ * arriving — with the system stack this app deliberately uses, the wordmark
+ * would render in a different face on Android, iOS and Windows. And the
+ * alternative, shipping a display webfont, costs real bytes on the mobile data
+ * this product is built around, for five letters.
  *
- * Decorative by default: the wordmark next to it carries the name, so the mark
- * itself is aria-hidden. Size it with a `size-*` class.
+ * The construction is honest to the mark: a geometric lowercase alphabet is
+ * circles and straight lines, so the o's, the d's bowl and the e are true
+ * circles of one radius, and the k is three strokes. It scales to any size and
+ * costs nothing.
+ *
+ * The letters use `currentColor` so the mark can sit on light or dark ground;
+ * the smile keeps its green in both, because that is the part people recognise.
+ */
+
+/** Geometry shared by the wordmark and the compact mark. */
+const SMILE_PATH = 'M56 78 Q101 99 146 78';
+
+export function LogoWordmark({
+  className,
+  tone = 'brand',
+}: {
+  className?: string;
+  /** `brand` is navy on light ground; `inverse` is white on dark. */
+  tone?: 'brand' | 'inverse';
+}) {
+  return (
+    <svg
+      viewBox="0 0 272 108"
+      role="img"
+      aria-label="Koode"
+      className={cn(
+        'h-auto',
+        tone === 'inverse' ? 'text-white' : 'text-navy-900',
+        className,
+      )}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={11}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* k — stem, arm, leg */}
+      <path d="M16 6v56" />
+      <path d="M16 42 40 24" />
+      <path d="M26 34 42 62" />
+
+      {/* o o */}
+      <circle cx="74" cy="44" r="18" />
+      <circle cx="128" cy="44" r="18" />
+
+      {/* d — bowl and ascender */}
+      <circle cx="182" cy="44" r="18" />
+      <path d="M200 6v56" />
+
+      {/* e — crossbar, then a 225° arc leaving the mouth open at lower right */}
+      {/*
+        e — crossbar left-to-right, then the bowl counter-clockwise from the
+        right terminal all the way round to just below it, leaving the mouth
+        open at lower right. The terminal is a real point on the r=18 circle
+        (252.7, 56.7); an endpoint even slightly off the radius makes SVG
+        scale the arc to reach it, which is what mirrored the glyph first time.
+      */}
+      <path d="M222 44H258A18 18 0 1 0 252.7 56.7" />
+
+      {/* The smile. Green in both tones: it is the recognisable part. */}
+      <path d={SMILE_PATH} className="text-brand-600" stroke="currentColor" strokeWidth={10} />
+    </svg>
+  );
+}
+
+/**
+ * The smile on its own, as a small inline accent.
+ *
+ * The one piece of the mark that stays recognisable at a few pixels tall, so
+ * it is what gets used as a bullet or a flourish beside a line of text.
+ * Decorative: never the only thing carrying meaning.
+ */
+export function SmileGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="46 66 110 40"
+      aria-hidden="true"
+      className={cn('shrink-0', className)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={16}
+      strokeLinecap="round"
+      preserveAspectRatio="none"
+    >
+      <path d={SMILE_PATH} />
+    </svg>
+  );
+}
+
+/**
+ * The compact mark: the smile alone, in a rounded tile.
+ *
+ * Used where the full wordmark would be illegible — the PWA icon, a favicon,
+ * an avatar-sized slot. Derived from the wordmark rather than invented, so the
+ * two read as one identity.
+ *
+ * Decorative by default: wherever this appears the name is written beside it.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-xl',
-        'bg-gradient-to-br from-brand-500 to-brand-700 shadow-sm',
+        'inline-flex shrink-0 items-center justify-center rounded-xl bg-navy-900',
         className,
       )}
     >
       <svg
-        viewBox="0 0 24 24"
-        className="size-[62%] text-white"
+        viewBox="40 60 122 50"
+        className="w-[64%] text-brand-500"
         fill="none"
         stroke="currentColor"
-        strokeWidth={2.8}
+        strokeWidth={14}
         strokeLinecap="round"
-        strokeLinejoin="round"
       >
-        <path d="M7.2 4.5v15" />
-        <path d="M7.2 12l9.3-7.5" />
-        <path d="M7.2 12l9.3 7.5" />
+        <path d={SMILE_PATH} />
       </svg>
     </span>
   );

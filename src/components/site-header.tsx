@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { LogoMark } from '@/components/logo';
+import { LogoWordmark } from '@/components/logo';
 import { NavLink } from '@/components/nav-link';
 import { getCurrentPerson } from '@/server/auth/session';
 
@@ -10,10 +10,7 @@ import { getCurrentPerson } from '@/server/auth/session';
  * ships no JavaScript except the language switcher.
  */
 export async function SiteHeader() {
-  const [tNav, tApp] = await Promise.all([
-    getTranslations('nav'),
-    getTranslations('app'),
-  ]);
+  const tNav = await getTranslations('nav');
   const person = await getCurrentPerson();
 
   return (
@@ -29,8 +26,9 @@ export async function SiteHeader() {
       */}
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <Link href="/" className="flex items-center gap-2.5">
-          <LogoMark className="size-9" />
-          <span className="text-xl font-semibold text-brand-700">{tApp('name')}</span>
+          {/* The wordmark carries the name and its own aria-label, so there is
+              no text label beside it — two would announce the name twice. */}
+          <LogoWordmark className="w-24 sm:w-28" />
         </Link>
 
         {/* Mobile: switcher shares the first row with the logo and the nav

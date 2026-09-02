@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { LogoMark } from '@/components/logo';
+import { LogoWordmark } from '@/components/logo';
 
 export async function SiteFooter() {
   const t = await getTranslations('app');
@@ -9,7 +9,7 @@ export async function SiteFooter() {
     <footer className="mt-10 border-t border-ink-200 bg-paper-raised">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 text-sm text-ink-700">
         <p className="flex items-center gap-2 font-medium text-ink-900">
-          <LogoMark className="size-6" />
+          <LogoWordmark className="w-20" />
           {t('tagline')}
         </p>
         <p className="mt-1">{t('byline')}</p>

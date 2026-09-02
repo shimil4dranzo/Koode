@@ -33,6 +33,7 @@ type Props = {
   categories: ChipOption[];
   engagements: ChipOption[];
   initial: {
+    q: string;
     scope: SearchScope;
     locality: string;
     category: string;
@@ -61,6 +62,34 @@ export function OpeningsFilter({
   return (
     <form method="get" aria-label={tCommon('filter')} className="mt-6">
       <Card>
+        {/*
+          Free text first, because it is the fastest way in and the way people
+          arrive from the home page. It must live inside this form: a GET form
+          submits only its own fields, so a `q` kept anywhere else would be
+          silently dropped the moment somebody changed a filter chip.
+        */}
+        <div className="mb-5">
+          <label htmlFor="opening-search" className="block text-base font-medium">
+            {t('searchLabel')}
+          </label>
+          <div className="mt-1.5 flex gap-2">
+            <input
+              id="opening-search"
+              type="search"
+              name="q"
+              defaultValue={initial.q}
+              placeholder={t('searchPlaceholder')}
+              className="min-h-touch w-full rounded-lg border border-ink-300 bg-paper-raised px-3 text-base"
+            />
+            <button
+              type="submit"
+              className="min-h-touch shrink-0 rounded-lg bg-brand-600 px-5 font-medium text-white hover:bg-brand-700"
+            >
+              {tCommon('search')}
+            </button>
+          </div>
+        </div>
+
         <ChipRadioGroup
           legend={t('scope')}
           name="scope"

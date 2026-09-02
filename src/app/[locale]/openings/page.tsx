@@ -104,14 +104,18 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
     ? requestedEngagement
     : undefined;
   const includeNearby = scope === 'local' && firstValue(query.nearby) === 'true';
+  // Free text from the home-page search box, or typed straight into the URL.
+  const q = firstValue(query.q)?.trim() || undefined;
 
   const hasFilter =
+    q !== undefined ||
     localityPublicId !== undefined ||
     categoryPublicId !== undefined ||
     engagementType !== undefined ||
     includeNearby;
 
   const { items } = await searchRequirements({
+    q,
     localityPublicId,
     categoryPublicId,
     engagementType,
@@ -149,6 +153,7 @@ export default async function OpeningsPage({ params, searchParams }: PageProps) 
           label: tEngagement(value),
         }))}
         initial={{
+          q: q ?? '',
           scope,
           locality: localityPublicId ?? '',
           category: categoryPublicId ?? '',

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { SelectField, TextField } from '@/components/ui/field';
-import { LogoMark } from '@/components/logo';
+import { LogoWordmark } from '@/components/logo';
 import { PageGlow } from '@/components/ui/decor';
 import { ApiError, api } from '@/lib/api';
 import { useApiMessages } from '@/lib/api-messages';
@@ -234,7 +234,7 @@ export function SignInFlow({
           className="flex flex-col gap-5"
         >
           <div>
-            <LogoMark className="mb-4 size-12" />
+            <LogoWordmark className="mb-5 w-28" />
             <h1 className="text-2xl font-semibold">{t('signInTitle')}</h1>
             <p className="mt-2 text-ink-700">{t('signInEmailSubtitle')}</p>
           </div>
@@ -281,7 +281,7 @@ export function SignInFlow({
           className="flex flex-col gap-5"
         >
           <div>
-            <LogoMark className="mb-4 size-12" />
+            <LogoWordmark className="mb-5 w-28" />
             <h1 className="text-2xl font-semibold">{t('createAccount')}</h1>
           </div>
 
@@ -350,7 +350,7 @@ export function SignInFlow({
           className="flex flex-col gap-5"
         >
           <div>
-            <LogoMark className="mb-4 size-12" />
+            <LogoWordmark className="mb-5 w-28" />
             <h1 className="text-2xl font-semibold">{t('completeProfile')}</h1>
             <p className="mt-2 text-ink-700">
               {t('googleCompleteSubtitle', { email: googleDraft.email })}
