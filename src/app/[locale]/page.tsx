@@ -7,6 +7,7 @@ import { LogoMark, LogoWordmark } from '@/components/logo';
 import { TownscapeArt } from '@/components/art';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { CategoryRing } from '@/components/category-ring';
+import { PhoneShowcase } from '@/components/phone-showcase';
 import { VouchGraph3d } from '@/components/three/vouch-graph-3d';
 import type { StyleWithVars } from '@/lib/css';
 import {
@@ -54,12 +55,23 @@ export default async function HomePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [t, tCommon, tApp, tAnchor, tEngagement, counts, tiers, vouches, latest] =
-    await Promise.all([
+  const [
+    t,
+    tCommon,
+    tApp,
+    tAnchor,
+    tRequirements,
+    tEngagement,
+    counts,
+    tiers,
+    vouches,
+    latest,
+  ] = await Promise.all([
       getTranslations('home'),
       getTranslations('common'),
       getTranslations('app'),
       getTranslations('anchor'),
+      getTranslations('requirements'),
       getTranslations('taxonomy.engagementType'),
       getPlatformCounts(),
       getCategoryGroups(locale),
@@ -186,45 +198,31 @@ export default async function HomePage({ params }: PageProps) {
             invented jobs on a page whose entire argument is that its listings
             are real.
           */}
-          <div className="mx-auto w-full max-w-sm lg:mx-0" data-reveal="swing">
-            <div className="rounded-[2rem] border-8 border-navy-900 bg-paper-raised p-3 shadow-lg">
-              <p className="px-1 pb-2 pt-1">
-                <LogoWordmark className="w-24" />
-              </p>
-              {latest.items.length > 0 ? (
-                <ol className="flex flex-col gap-2">
-                  {latest.items.slice(0, 3).map((item) => (
-                    <li
-                      key={item.publicId}
-                      className="rounded-lg border border-ink-200 px-3 py-2.5"
-                    >
-                      <Link
-                        href={`/openings/${item.publicId}`}
-                        className="text-base font-medium hover:text-brand-700"
-                      >
-                        {item.title}
-                      </Link>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-ink-700">
-                        <span className="inline-flex items-center gap-1">
-                          <IconMapPin className="size-4 text-ink-500" />
-                          {item.localityLabel}
-                        </span>
-                        <span aria-hidden="true">·</span>
-                        <span>{tEngagement(item.engagementType)}</span>
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              ) : null}
-              <Link
-                href="/openings"
-                className="mt-2 flex min-h-touch items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 font-medium text-white hover:bg-brand-700"
-              >
-                {t('findWork')}
-                <IconArrowRight className="size-4.5" />
-              </Link>
-            </div>
-          </div>
+          {/*
+            The product in a device you can tilt, rather than a picture of one.
+            Same rows the openings page renders, and the tabs actually filter
+            them — a mock screenshot would go stale the first time a card
+            changed, and would be showing invented jobs on a page whose whole
+            argument is that its listings are real.
+          */}
+          <PhoneShowcase
+            className="mx-auto w-full max-w-xs lg:mx-0 lg:max-w-sm"
+            data-reveal="swing"
+            findWorkHref={`/${locale}/openings`}
+            labels={{
+              all: tCommon('all'),
+              findWork: t('findWork'),
+              filterLabel: tRequirements('filterEngagement'),
+            }}
+            items={latest.items.slice(0, 6).map((item) => ({
+              publicId: item.publicId,
+              title: item.title,
+              localityLabel: item.localityLabel,
+              engagementType: item.engagementType,
+              engagementLabel: tEngagement(item.engagementType),
+              href: `/${locale}/openings/${item.publicId}`,
+            }))}
+          />
         </div>
 
         {/* Four proof points, in the order somebody actually asks them. */}
