@@ -9,68 +9,77 @@
  * contrast, big tap targets, and meaning never carried by colour alone.
  */
 @theme {
-  /* Ink and paper. Near-black rather than pure black reads better on the
-     cheap LCD panels these phones use. */
-  --color-ink-900: oklch(0.19 0.012 250);
-  --color-ink-700: oklch(0.36 0.014 250);
-  --color-ink-500: oklch(0.53 0.014 250);
+  /* Ink and paper — the "Almoayyed" theme.
 
-  /* Border of a form control — an input, a select, a chip, the switch track.
-     WCAG 1.4.11 requires 3:1 against the adjacent surface for anything that
-     identifies a control, and this is measured rather than judged by eye:
-     see `npm run check:contrast`. It sits darker than a designer's instinct
-     (at 2.3:1 the edge of a text field disappears on a cheap LCD outdoors),
-     and at 0.64 rather than 0.66 because chips and the nearby switch put this
-     border directly on the page ground, not only on white cards, and the
-     lighter value measured 2.81:1 there. */
-  --color-ink-300: oklch(0.64 0.012 250);
+     The neutrals are tinted toward the gradient's plum (hue 330) rather than
+     the blue-grey they used to be, so text and rules sit inside the palette
+     instead of on top of it. Lightness values are unchanged where they could
+     be; the two that moved, moved because they had to (see below). */
+  --color-ink-900: oklch(0.19 0.020 330);
+  --color-ink-700: oklch(0.36 0.022 330);
 
-  /* Border of a non-interactive container. WCAG does not require 3:1 here,
-     and forcing it makes every card read as a wireframe box. Raised from
-     1.5:1 to roughly 2:1 so the grouping survives sunlight without shouting. */
-  --color-ink-200: oklch(0.80 0.008 250);
-  --color-ink-100: oklch(0.94 0.005 250);
+  /* Darkened from 0.53. The gradient ground is a shade deeper than the flat
+     near-white it replaced, and at the old value captions measured 3.61:1
+     against it — under the 4.5 floor. */
+  --color-ink-500: oklch(0.47 0.022 330);
 
-  /* The page ground is deliberately a shade off white so that a white card
-     lifts off it on its own. Relying on the border alone to separate a card
-     from the page was what made the border have to work too hard. */
-  --color-paper: oklch(0.965 0.004 95);
+  /* Darkened from 0.64, for the same reason and more sharply: chips and switch
+     tracks put this border directly on the gradient ground, where the old
+     value measured 2.30:1 against a 3:1 requirement.
+
+     Worth recording why a veil alone could not fix either of these. Lightening
+     the veil lifts the dark plum (which helps ink-900) but also lightens every
+     mid-tone the gradient passes through, and a mid-tone token on a mid-tone
+     ground has nowhere to go: swept from 0.30 to 0.80, no veil value brought
+     ink-500 or ink-300 to their floors. The tokens had to move. */
+  --color-ink-300: oklch(0.56 0.020 330);
+
+  --color-ink-200: oklch(0.74 0.014 330);
+  --color-ink-100: oklch(0.92 0.010 330);
+
+  /* The page ground.
+
+     This is no longer a colour the page paints — the gradient paints it. The
+     token is the DARKEST point that ground can reach, so every pair measured
+     against `paper` is measured against the worst case rather than an average.
+     See app-background.tsx for how the veil pins it there. */
+  --color-paper: #e2dce1;
   --color-paper-raised: oklch(1 0 0);
 
-  /* Kerala green — the association's colour, and legible in sunlight. */
-  --color-brand-700: oklch(0.42 0.11 155);
-  --color-brand-600: oklch(0.50 0.13 155);
-  /* 0.60, not 0.58: at 0.58 the hero's primary button — night-900 text on this
-     green — measured 4.47:1, just under the 4.5 floor. Two hundredths of
-     lightness is invisible next to the old value and puts it safely over. */
-  --color-brand-500: oklch(0.60 0.14 155);
-  --color-brand-100: oklch(0.94 0.03 155);
+  /* Wine, taken from the gradient's own plum stops. The palette used to be
+     Kerala green; it moves here so the accent belongs to the ground it sits
+     on rather than fighting it. */
+  --color-brand-700: oklch(0.38 0.13 345);
+  --color-brand-600: oklch(0.46 0.15 345);
+  /* 0.64 rather than following the 0.56 step. The hero's primary button puts
+     near-black plum text on this colour, and wine is intrinsically darker than
+     the green it replaced: at 0.56 that label measured 3.64:1. Lightening the
+     one step that carries dark text is better than darkening the text, which
+     would have to leave the palette to find the contrast. */
+  --color-brand-500: oklch(0.64 0.16 345);
+  --color-brand-100: oklch(0.93 0.04 345);
 
   /* The hero band, and only the hero band.
 
-     The rest of the app is deliberately light — it is read outdoors on cheap
-     screens. But the launch banner carries a WebGL graph drawn with additive
-     blending, and additive blending on a white ground washes to white: the
-     network would be invisible on the exact screen it exists to impress. On a
-     near-black green the same points glow. So this is one dark band at the
-     top, not a dark theme. */
-  --color-night-900: oklch(0.20 0.035 165);
-  --color-night-800: oklch(0.26 0.04 165);
-  --color-night-700: oklch(0.34 0.042 165);
+     Now the gradient's own near-black plum rather than a green-black, so the
+     banner reads as the deep end of the same palette. The WebGL graph is
+     additively blended and still needs a dark ground to glow on. */
+  --color-night-900: oklch(0.20 0.085 340);
+  --color-night-800: oklch(0.26 0.090 340);
+  --color-night-700: oklch(0.34 0.090 340);
   /* Secondary text on the band. Measured against night-900, not guessed. */
-  --color-night-300: oklch(0.86 0.03 165);
+  --color-night-300: oklch(0.86 0.030 340);
 
-  /* Trust marker for verified members. Deliberately distinct from brand green
-     so a badge never reads as decoration. */
-  --color-verify-600: oklch(0.52 0.13 250);
-  --color-verify-100: oklch(0.95 0.03 250);
+  /* Trust marker for verified members. Deliberately kept blue — distinct from
+     the wine brand, so a badge never reads as decoration. */
+  --color-verify-600: oklch(0.47 0.13 255);
+  --color-verify-100: oklch(0.94 0.03 255);
 
-  /* Darker than it looks like it needs to be: the offline banner renders this
-     on --color-warn-100, and at 0.58 that pairing measured 3.74:1 — below the
-     4.5:1 required for body text. */
-  --color-warn-600: oklch(0.53 0.15 65);
+  /* Darkened a step along with the ground: these sit on their own tinted
+     panels, which are now marginally deeper than before. */
+  --color-warn-600: oklch(0.50 0.15 65);
   --color-warn-100: oklch(0.95 0.05 65);
-  --color-danger-600: oklch(0.53 0.19 25);
+  --color-danger-600: oklch(0.50 0.19 25);
   --color-danger-100: oklch(0.95 0.04 25);
 
   /* Malayalam glyphs carry more vertical detail than Latin ones and become
@@ -113,6 +122,10 @@
   }
 
   body {
+    /* The gradient layer paints the ground (see AppBackground). This stays as
+       the fallback colour behind it, and it is the same token every contrast
+       pair is measured against, so a failure to render the gradient degrades
+       to a legible page rather than a broken one. */
     background-color: var(--color-paper);
     color: var(--color-ink-900);
     text-rendering: optimizeLegibility;

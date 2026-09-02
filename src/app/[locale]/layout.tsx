@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+import { AppBackground } from '@/components/ui/app-background';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { ServiceWorkerRegistrar } from '@/components/pwa/service-worker-registrar';
@@ -43,7 +44,7 @@ export const viewport: Viewport = {
   // Never block zoom: some users need to enlarge text to read it at all.
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#1c6b45',
+  themeColor: '#310527',
 };
 
 export default async function LocaleLayout({ children, params }: LayoutProps) {
@@ -57,7 +58,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   return (
     <html lang={locale}>
-      <body className="min-h-dvh flex flex-col bg-paper text-ink-900 antialiased">
+      <body className="min-h-dvh flex flex-col text-ink-900 antialiased">
+        <AppBackground />
         <NextIntlClientProvider>
           <a
             href="#main"

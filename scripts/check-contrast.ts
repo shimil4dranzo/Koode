@@ -86,15 +86,31 @@ const TOKENS: Record<string, Rgb> = (() => {
   };
 
   // --color-<name>: oklch(<L> <C> <H>);
-  const pattern =
+  const oklchPattern =
     /--color-([a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/g;
 
-  for (const match of css.matchAll(pattern)) {
+  for (const match of css.matchAll(oklchPattern)) {
     const [, name, l, c, h] = match;
     if (name === undefined || l === undefined || c === undefined || h === undefined) {
       continue;
     }
     tokens[name] = oklchToSrgb(Number(l), Number(c), Number(h));
+  }
+
+  // --color-<name>: #rrggbb;
+  // `paper` is written as a hex literal because it is not a colour anyone
+  // chose on a perceptual scale — it is the measured darkest point of the
+  // gradient ground, and rounding it through OKLCH would move the very number
+  // the rest of this check depends on.
+  const hexPattern = /--color-([a-z0-9-]+):\s*#([0-9a-fA-F]{6})\b/g;
+  for (const match of css.matchAll(hexPattern)) {
+    const [, name, value] = match;
+    if (name === undefined || value === undefined) continue;
+    tokens[name] = {
+      r: Number.parseInt(value.slice(0, 2), 16) / 255,
+      g: Number.parseInt(value.slice(2, 4), 16) / 255,
+      b: Number.parseInt(value.slice(4, 6), 16) / 255,
+    };
   }
 
   if (Object.keys(tokens).length < 5) {
