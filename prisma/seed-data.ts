@@ -810,6 +810,86 @@ export const SEED_CATEGORIES: SeedCategory[] = [
     parentSlug: 'professional-office',
     sortOrder: 14,
   },
+
+  // =========================================================================
+  // Tier 5 — Remote & digital work
+  //
+  // Added because the platform's own description promises call centres,
+  // digital-platform work and a route into corporate and IT roles, and a
+  // promise the taxonomy cannot express is a promise the product does not
+  // keep: a seeker filtering for call-centre work would have found nothing
+  // and concluded the platform was empty.
+  //
+  // It is a tier of its own rather than more rows under "Professional &
+  // office" because the distinguishing fact is not the skill level but where
+  // the work physically happens. These roles can be done from Edakkara for an
+  // employer anywhere, which is exactly the door the platform says it opens,
+  // and seekers filter on that far more sharply than on seniority.
+  // =========================================================================
+  {
+    slug: 'remote-digital',
+    level: 'tier',
+    nameEn: 'Remote & digital work',
+    nameMl: 'വിദൂര, ഡിജിറ്റൽ ജോലികൾ',
+    parentSlug: null,
+    sortOrder: 5,
+  },
+  {
+    slug: 'call-centre-agent',
+    level: 'role',
+    nameEn: 'Call centre & customer support',
+    nameMl: 'കോൾ സെന്റർ, കസ്റ്റമർ സപ്പോർട്ട്',
+    parentSlug: 'remote-digital',
+    sortOrder: 1,
+  },
+  {
+    slug: 'tele-sales',
+    level: 'role',
+    nameEn: 'Tele-sales & tele-marketing',
+    nameMl: 'ടെലി സെയിൽസ്, ടെലി മാർക്കറ്റിംഗ്',
+    parentSlug: 'remote-digital',
+    sortOrder: 2,
+  },
+  {
+    slug: 'bpo-data-entry',
+    level: 'role',
+    nameEn: 'BPO & data entry',
+    nameMl: 'ബി.പി.ഒ, ഡാറ്റാ എൻട്രി',
+    parentSlug: 'remote-digital',
+    sortOrder: 3,
+  },
+  {
+    slug: 'it-support',
+    level: 'role',
+    nameEn: 'IT support & helpdesk',
+    nameMl: 'ഐ.ടി സപ്പോർട്ട്, ഹെൽപ്പ്ഡെസ്ക്',
+    parentSlug: 'remote-digital',
+    sortOrder: 4,
+  },
+  {
+    slug: 'online-freelance',
+    level: 'role',
+    nameEn: 'Online & freelance platform work',
+    nameMl: 'ഓൺലൈൻ, ഫ്രീലാൻസ് ജോലികൾ',
+    parentSlug: 'remote-digital',
+    sortOrder: 5,
+  },
+  {
+    slug: 'content-social-media',
+    level: 'role',
+    nameEn: 'Content & social media',
+    nameMl: 'കണ്ടന്റ്, സോഷ്യൽ മീഡിയ',
+    parentSlug: 'remote-digital',
+    sortOrder: 6,
+  },
+  {
+    slug: 'remote-admin',
+    level: 'role',
+    nameEn: 'Remote admin & virtual assistant',
+    nameMl: 'വിദൂര ഓഫീസ് സഹായി',
+    parentSlug: 'remote-digital',
+    sortOrder: 7,
+  },
 ];
 
 // ===========================================================================

@@ -46,6 +46,7 @@ const TIER_ICONS: Record<string, typeof IconSprout> = {
   'skilled-trades': IconWrench,
   'commercial-operations': IconStore,
   'professional-office': IconBriefcase,
+  'remote-digital': IconMapPin,
 };
 
 export default async function HomePage({ params }: PageProps) {
@@ -219,6 +220,29 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
+      {/*
+        The premise, in one line.
+
+        This is the argument the About page makes at length, compressed to the
+        single claim a visitor needs before the listings mean anything: both
+        sides are already searching and cannot see each other. Placed above the
+        openings because a list of jobs reads differently once you know what
+        the list is for.
+      */}
+      <section className="mx-auto w-full max-w-6xl px-4 pt-10">
+        <div className="rounded-card border border-ink-200 bg-paper-raised p-5 sm:p-6" data-reveal="lift">
+          <h2 className="text-xl font-semibold sm:text-2xl">{t('mismatchTitle')}</h2>
+          <p className="mt-2 max-w-3xl text-lg text-ink-700">{t('mismatchBody')}</p>
+          <Link
+            href="/about"
+            className="mt-3 inline-flex min-h-touch items-center gap-1.5 font-medium text-brand-700 underline-offset-2 hover:underline"
+          >
+            {t('mismatchLink')}
+            <IconArrowRight className="size-4.5" />
+          </Link>
+        </div>
+      </section>
+
       {/* ---- Latest openings: the stock in the window --------------------- */}
       {latest.items.length > 0 ? (
         <section className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -279,7 +303,7 @@ export default async function HomePage({ params }: PageProps) {
             {t('tiersBody')}
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {tiers.map((tier, index) => {
               const TierIcon = TIER_ICONS[tier.slug] ?? IconBriefcase;
               return (

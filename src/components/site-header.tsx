@@ -46,6 +46,7 @@ export async function SiteHeader() {
           className="flex w-full items-center gap-1 sm:order-1 sm:ms-auto sm:w-auto"
         >
           <NavLink href="/openings">{tNav('openings')}</NavLink>
+          <NavLink href="/about">{tNav('about')}</NavLink>
 
           {person ? (
             <NavLink href="/profile">{tNav('profile')}</NavLink>

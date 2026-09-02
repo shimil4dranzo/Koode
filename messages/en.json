@@ -41,7 +41,8 @@
     "signIn": "Sign in",
     "signOut": "Sign out",
     "admin": "Admin",
-    "menu": "Menu"
+    "menu": "Menu",
+    "about": "About"
   },
   "home": {
     "heroTitle": "Work found through people you know",
@@ -70,7 +71,10 @@
     "ctaAction": "Get started",
     "heroEyebrow": "Local work, on the strength of a local word",
     "heroScrollHint": "Scroll to see how it works",
-    "heroGraphCaption": "A picture of the network Koode builds: people, and the recommendations that connect them."
+    "heroGraphCaption": "A picture of the network Koode builds: people, and the recommendations that connect them.",
+    "mismatchTitle": "The shortage is not of work",
+    "mismatchBody": "People looking for work and employers looking for people are both searching, and neither can see the other. Koode closes that gap.",
+    "mismatchLink": "Why Koode exists"
   },
   "auth": {
     "signInTitle": "Sign in to Koode",
@@ -449,5 +453,31 @@
     "verifiedBadge": "Verified member",
     "loading": "Loading",
     "required": "required field"
+  },
+  "about": {
+    "metaTitle": "About Koode",
+    "eyebrow": "Why this exists",
+    "title": "One opportunity can change a life. Thousands can change a place.",
+    "lede": "Koode is a community-run platform for work in and around Edakkara — built so that the people who need work and the people who need workers can actually find each other.",
+    "problemTitle": "The shortage is not of work",
+    "problemBody": "Thousands of young people are running from place to place looking for work that suits them. At the same time, employers are struggling to find people they can trust to do the job. Both sides are searching. Neither can see the other. That gap — not a lack of jobs — is what holds a local economy back.",
+    "problemSeekerLabel": "On one side",
+    "problemSeekerBody": "Qualified, capable people with no way to be seen beyond whoever already knows them.",
+    "problemEmployerLabel": "On the other",
+    "problemEmployerBody": "Employers filling a role with whoever they happen to be able to phone that day.",
+    "answerTitle": "One roof, both sides",
+    "answerBody": "Koode brings people offering work and people looking for it under a single roof, run by the community rather than by an outside company. The larger aim is straightforward: strengthen the local economy of Kerala by keeping opportunity, and the people who can take it up, in the same place.",
+    "breadthTitle": "Not only a job portal",
+    "breadthBody": "Work is not one shape. Koode carries the full range, from a day's work down the road to a role with a company that never needs you to leave home.",
+    "breadthFullTime": "Full-time jobs",
+    "breadthPartTime": "Part-time work",
+    "breadthLocalServices": "Local services",
+    "breadthCallCentre": "Call centres",
+    "breadthDigital": "Digital platform work",
+    "breadthCorporate": "Corporate & IT roles",
+    "ecosystemTitle": "Your own platform",
+    "ecosystemBody": "Every recommendation on Koode carries a real name, and every person raised up strengthens the next. That is the point: not a listings board, but a community ecosystem that belongs to the people using it.",
+    "ctaSeeker": "Find work",
+    "ctaEmployer": "Post an opening"
   }
 }
