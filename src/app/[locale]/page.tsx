@@ -6,6 +6,7 @@ import { PageGlow } from '@/components/ui/decor';
 import { LogoMark, LogoWordmark } from '@/components/logo';
 import { TownscapeArt } from '@/components/art';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { CategoryRing } from '@/components/category-ring';
 import { VouchGraph3d } from '@/components/three/vouch-graph-3d';
 import type { StyleWithVars } from '@/lib/css';
 import {
@@ -100,7 +101,7 @@ export default async function HomePage({ params }: PageProps) {
         lives one section down and on the About page, where somebody who wants
         it can find it and somebody who wants a job never has to read it.
       */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-6 pt-8 lg:pt-12">
+      <section className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div data-reveal="lift">
             {/* No mark on this line. The smile on its own is the logo's
@@ -271,7 +272,7 @@ export default async function HomePage({ params }: PageProps) {
         openings because a list of jobs reads differently once you know what
         the list is for.
       */}
-      <section className="mx-auto w-full max-w-6xl px-4 pt-10">
+      <section className="mx-auto w-full max-w-6xl px-4 pt-10 lg:pt-14">
         <div className="rounded-card border border-ink-200 bg-paper-raised p-5 sm:p-6" data-reveal="lift">
           <h2 className="text-xl font-semibold sm:text-2xl">{t('mismatchTitle')}</h2>
           <p className="mt-2 max-w-3xl text-lg text-ink-700">{t('mismatchBody')}</p>
@@ -287,7 +288,7 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* ---- Latest openings: the stock in the window --------------------- */}
       {latest.items.length > 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-4 py-10">
+        <section className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-xl font-semibold sm:text-2xl">{t('latestTitle')}</h2>
             <Link
@@ -337,7 +338,7 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* ---- The four tiers: every kind of work, same dignity -------------- */}
       <section className="border-y border-ink-200 bg-paper-raised">
-        <div className="mx-auto w-full max-w-6xl px-4 py-10">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
           <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
             {t('tiersTitle')}
           </h2>
@@ -345,7 +346,28 @@ export default async function HomePage({ params }: PageProps) {
             {t('tiersBody')}
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {/*
+            The ring is a wide-screen enhancement layered over the grid, not a
+            replacement for it. The grid stays the real control: it is what
+            phones get, what keyboards tab through comfortably, and what
+            renders with no JavaScript at all. The ring simply shows the same
+            five links with depth on a screen that has room for it.
+          */}
+          <CategoryRing
+            labels={{ previous: tCommon('previous'), next: tCommon('next') }}
+            className="mt-6 hidden lg:block"
+            items={tiers.map((tier) => ({
+              publicId: tier.publicId,
+              label: tier.label,
+              hint: tier.roles
+                .slice(0, 3)
+                .map((role) => role.label)
+                .join(' · '),
+              href: `/${locale}/openings?category=${tier.publicId}`,
+            }))}
+          />
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:hidden">
             {tiers.map((tier, index) => {
               const TierIcon = TIER_ICONS[tier.slug] ?? IconBriefcase;
               return (
@@ -354,7 +376,7 @@ export default async function HomePage({ params }: PageProps) {
                   href={`/openings?category=${tier.publicId}`}
                   data-reveal="card"
                   style={{ '--reveal-delay': `${index * 80}ms` } as StyleWithVars}
-                  className="group flex h-full flex-col gap-2 rounded-card border border-ink-200 p-4 transition-colors hover:border-brand-600"
+                  className="group flex h-full flex-col gap-2 rounded-2xl border border-ink-200 bg-paper-raised p-4 shadow-sm transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-brand-600 hover:shadow-lg"
                 >
                   <span className="inline-flex size-10 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
                     <TierIcon className="size-5.5" />
@@ -384,7 +406,7 @@ export default async function HomePage({ params }: PageProps) {
         graph is showing, rather than behind a headline as decoration.
       */}
       <section className="border-y border-navy-800 bg-navy-900 text-white">
-        <div className="mx-auto w-full max-w-6xl px-4 py-12">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
         <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
           {t('howItWorksTitle')}
         </h2>
@@ -445,7 +467,7 @@ export default async function HomePage({ params }: PageProps) {
         a visitor gives a page. Here they land after somebody has seen the
         listings and is deciding whether to believe them.
       */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-10">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-10 lg:pb-14">
         <Card className="flex flex-col gap-4 sm:flex-row sm:items-center" data-reveal="lift">
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-verify-100 text-verify-600">
             <IconShield className="size-6" />
@@ -512,7 +534,7 @@ export default async function HomePage({ params }: PageProps) {
             opacity so the heading keeps its contrast — the text sits on
             brand-700, and this never lightens that ground. */}
         <TownscapeArt className="pointer-events-none absolute inset-x-0 bottom-0 h-48 w-full text-white/20" />
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between lg:py-14">
           <div className="flex items-center gap-4" data-reveal="swing">
             <LogoMark className="size-12" />
             <div>

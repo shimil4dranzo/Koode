@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn';
  */
 const TONES = {
   /** White card on the page ground. The default everywhere. */
-  paper: 'border-ink-200 bg-paper-raised',
+  paper: 'border-ink-200 bg-paper-raised shadow-sm',
   /** Slightly sunken, for a panel inside a page rather than on it. */
   sunken: 'border-ink-200 bg-ink-100',
   /** On a dark band: the card is part of the band, not a hole in it. */
@@ -43,7 +43,7 @@ export function Card({
 }) {
   return (
     <Tag
-      className={cn('rounded-card border p-4 sm:p-5', TONES[tone], className)}
+      className={cn('rounded-2xl border p-4 sm:p-5', TONES[tone], className)}
       {...rest}
     >
       {children}

@@ -93,6 +93,38 @@
   --color-danger-600: oklch(0.50 0.19 25);
   --color-danger-100: oklch(0.95 0.04 25);
 
+  /* ---- shadcn-compatible aliases ------------------------------------
+
+     Components written for a shadcn project ask for `bg-background`,
+     `text-muted-foreground`, `bg-primary` and so on. None of those existed
+     here, so such a component rendered transparent with default black text.
+
+     These are aliases onto the palette above, not a second palette. That
+     matters: the brand is navy-and-green taken from the wordmark, and every
+     pairing has been measured. Adopting shadcn's default theme wholesale would
+     have thrown that away and replaced it with a generic one. This way a
+     dropped-in component inherits the real brand instead of importing a
+     different product's. */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink-900);
+  --color-muted: var(--color-ink-100);
+  --color-muted-foreground: var(--color-ink-700);
+  --color-card: var(--color-paper-raised);
+  --color-card-foreground: var(--color-ink-900);
+  --color-popover: var(--color-paper-raised);
+  --color-popover-foreground: var(--color-ink-900);
+  --color-primary: var(--color-brand-600);
+  --color-primary-foreground: oklch(1 0 0);
+  --color-secondary: var(--color-navy-900);
+  --color-secondary-foreground: oklch(1 0 0);
+  --color-accent: var(--color-brand-100);
+  --color-accent-foreground: var(--color-brand-700);
+  --color-destructive: var(--color-danger-600);
+  --color-destructive-foreground: oklch(1 0 0);
+  --color-border: var(--color-ink-200);
+  --color-input: var(--color-ink-300);
+  --color-ring: var(--color-verify-600);
+
   /* Malayalam glyphs carry more vertical detail than Latin ones and become
      unreadable at the sizes a Latin-first design would use. The base size is
      therefore 17px, not 16px, and line height is generous. */

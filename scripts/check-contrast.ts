@@ -175,6 +175,12 @@ const PAIRS: Pair[] = [
   { fg: 'night-900', bg: 'brand-500', where: 'hero primary button label', kind: 'text' },
   { fg: 'brand-500', bg: 'night-900', where: 'hero accent mark', kind: 'ui' },
 
+  // The shadcn aliases resolve to these same tokens, so a dropped-in
+  // component's default pairings are covered by the pairs already listed —
+  // except muted-foreground, which is the one shadcn components reach for most
+  // and which no existing pair happened to cover on a card.
+  { fg: 'ink-700', bg: 'ink-100', where: 'muted-foreground on muted', kind: 'text' },
+
   { fg: 'white', bg: 'brand-600', where: 'primary button label', kind: 'text' },
   { fg: 'white', bg: 'brand-700', where: 'closing CTA heading on the green band', kind: 'text' },
   { fg: 'brand-100', bg: 'brand-700', where: 'closing CTA body text', kind: 'text' },
