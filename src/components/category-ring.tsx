@@ -28,9 +28,11 @@ import { IconArrowRight } from '@/components/icons';
  *    target you have to chase.
  *  - Focus brings a card to the front, so a keyboard user never lands on a
  *    focus ring that is turned out of sight.
- *  - Below `lg` it does not mount; the caller renders the plain grid. A fan is
- *    a wide-screen shape, and on a phone it would cost the most on the devices
- *    that can least afford it.
+ *  - Below `lg` the caller hides it with a class and renders the plain grid
+ *    instead. A class only stops the pixels — React still mounts the component
+ *    — so the drift also checks the same breakpoint and does no work at all on
+ *    a phone. A fan is a wide-screen shape, and running a timer for one nobody
+ *    can see costs the most on the devices that can least afford it.
  */
 
 export type RingItem = {
@@ -68,18 +70,37 @@ export function CategoryRing({
   const [centre, setCentre] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  /**
+   * Whether this is even on screen.
+   *
+   * The caller hides the fan below `lg` with a class, which sets display:none
+   * but does not stop React mounting it — so on a phone it was stepping a
+   * timer and re-rendering five cards nobody could see, every 2.6 seconds,
+   * for the life of the page. Matching the same breakpoint here stops the
+   * work rather than just the pixels.
+   */
+  const [wideEnough, setWideEnough] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReducedMotion(query.matches);
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Tailwind's `lg`, which is where the caller switches the fan on.
+    const wide = window.matchMedia('(min-width: 64rem)');
+    const sync = () => {
+      setReducedMotion(motion.matches);
+      setWideEnough(wide.matches);
+    };
     sync();
-    query.addEventListener('change', sync);
-    return () => query.removeEventListener('change', sync);
+    motion.addEventListener('change', sync);
+    wide.addEventListener('change', sync);
+    return () => {
+      motion.removeEventListener('change', sync);
+      wide.removeEventListener('change', sync);
+    };
   }, []);
 
   useEffect(() => {
-    if (paused || reducedMotion || items.length < 2) return;
+    if (paused || reducedMotion || !wideEnough || items.length < 2) return;
 
     // A step every few seconds, not a value updated every frame. The movement
     // between two resting states is a CSS transition, so the compositor does
@@ -90,7 +111,7 @@ export function CategoryRing({
     }, DWELL_MS);
 
     return () => clearInterval(timer.current);
-  }, [paused, reducedMotion, items.length]);
+  }, [paused, reducedMotion, wideEnough, items.length]);
 
   if (items.length === 0) return null;
 

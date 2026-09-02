@@ -146,7 +146,7 @@ export function PhoneShowcase({
                       aria-selected={selected}
                       onClick={() => setActive(value)}
                       className={cn(
-                        'shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors',
+                        'inline-flex min-h-touch shrink-0 items-center rounded-full border px-4 text-sm transition-colors',
                         selected
                           ? 'border-brand-600 bg-brand-600 text-white'
                           : 'border-ink-300 text-ink-700 hover:border-brand-600',

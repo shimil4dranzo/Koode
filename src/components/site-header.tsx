@@ -25,7 +25,7 @@ export async function SiteHeader() {
         these labels are already at the minimum comfortable reading size.
       */}
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex min-h-touch items-center gap-2.5">
           {/* The wordmark carries the name and its own aria-label, so there is
               no text label beside it — two would announce the name twice. */}
           <LogoWordmark className="w-24 sm:w-28" />

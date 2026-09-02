@@ -503,19 +503,19 @@ export default async function HomePage({ params }: PageProps) {
                   <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-700">
                     <span className="font-medium text-ink-900">{vouch.referrerName}</span>
                     {vouch.referrerIsVerifiedMember ? (
-                      <Badge tone="verified" glyph="\u2713">
+                      <Badge tone="verified" glyph="✓">
                         {tAnchor('verified')}
                       </Badge>
                     ) : null}
-                    <span aria-hidden="true">\u2192</span>
+                    <span aria-hidden="true">→</span>
                     <Link
                       href={`/people/${vouch.subjectPublicId}`}
-                      className="underline underline-offset-2 hover:text-brand-700"
+                      className="-my-2 py-2 underline underline-offset-2 hover:text-brand-700"
                     >
                       {vouch.subjectName}
                     </Link>
                     {vouch.categoryLabel ? (
-                      <span className="text-ink-500">\u00b7 {vouch.categoryLabel}</span>
+                      <span className="text-ink-500">· {vouch.categoryLabel}</span>
                     ) : null}
                   </p>
                 </Card>
