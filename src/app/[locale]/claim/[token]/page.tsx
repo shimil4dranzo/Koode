@@ -101,7 +101,7 @@ export default async function ClaimPage({ params }: PageProps) {
         </Card>
       ) : null}
 
-      <Card className="mt-4 bg-ink-100">
+      <Card tone="sunken" className="mt-4">
         <p>{t('yourDetails', { name: preview.subjectName, phone: preview.maskedPhone })}</p>
         <p className="mt-3 font-medium">
           {t('explain', {

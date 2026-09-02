@@ -17,6 +17,11 @@ import { cn } from '@/lib/cn';
  *
  * The letters use `currentColor` so the mark can sit on light or dark ground;
  * the smile keeps its green in both, because that is the part people recognise.
+ *
+ * There is deliberately no export for the smile on its own. It was tried as an
+ * inline flourish beside a line of text and read as the wordmark with the word
+ * missing — a broken logo rather than a decoration. The smile appears either
+ * inside the wordmark or inside the tile below, never loose.
  */
 
 /** Geometry shared by the wordmark and the compact mark. */
@@ -78,29 +83,6 @@ export function LogoWordmark({
         stroke="currentColor"
         strokeWidth={10}
       />
-    </svg>
-  );
-}
-
-/**
- * The smile on its own, as a small inline accent.
- *
- * The one piece of the mark that stays recognisable at a few pixels tall, so
- * it is what gets used as a bullet or a flourish beside a line of text.
- * Decorative: never the only thing carrying meaning.
- */
-export function SmileGlyph({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="46 66 110 40"
-      aria-hidden="true"
-      className={cn('h-auto shrink-0', className)}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={16}
-      strokeLinecap="round"
-    >
-      <path d={SMILE_PATH} />
     </svg>
   );
 }

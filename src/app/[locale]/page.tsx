@@ -3,7 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
-import { LogoMark, LogoWordmark, SmileGlyph } from '@/components/logo';
+import { LogoMark, LogoWordmark } from '@/components/logo';
 import { TownscapeArt } from '@/components/art';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { VouchGraph3d } from '@/components/three/vouch-graph-3d';
@@ -103,10 +103,10 @@ export default async function HomePage({ params }: PageProps) {
       <section className="mx-auto w-full max-w-6xl px-4 pb-6 pt-8 lg:pt-12">
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div data-reveal="lift">
-            <p className="flex items-center gap-2 text-base font-medium text-ink-700">
-              {t('heroKicker')}
-              <SmileGlyph className="w-7 text-brand-600" />
-            </p>
+            {/* No mark on this line. The smile on its own is the logo's
+                smile, so beside a sentence it reads as the wordmark with the
+                word missing rather than as a flourish. */}
+            <p className="text-base font-medium text-ink-700">{t('heroKicker')}</p>
 
             {/*
               Set in type, not with the logo.
@@ -403,7 +403,8 @@ export default async function HomePage({ params }: PageProps) {
                 as="li"
                 data-reveal="card"
                 style={{ '--reveal-delay': `${index * 90}ms` } as StyleWithVars}
-                className="flex h-full gap-4 border-white/20 bg-navy-800/70"
+                tone="inverse"
+                className="flex h-full gap-4"
               >
                 <span
                   aria-hidden="true"
