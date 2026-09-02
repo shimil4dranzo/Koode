@@ -56,9 +56,9 @@ const VARIANTS = {
     verifiedSize: 0.3,
     edgeOpacity: 0.5,
     // On the light card the graph must stay dark enough to read as ink.
-    nodeColor: '#7a1c56',
+    nodeColor: '#1c7a52',
     verifiedColor: '#3b74d4',
-    edgeColor: '#9c2f74',
+    edgeColor: '#2f9c68',
     /** Squash of the sphere into a lens. */
     flatten: 0.55,
     spread: 2.6,
@@ -79,9 +79,9 @@ const VARIANTS = {
     // Much brighter than the panel, because these are additive-blended over
     // near-black rather than over white. The panel's ink green simply does not
     // register against night-900.
-    nodeColor: '#f06bb8',
+    nodeColor: '#5cf0a8',
     verifiedColor: '#79b4ff',
-    edgeColor: '#c2478e',
+    edgeColor: '#3fc98a',
     // Flatter and wider: a band across the banner, not a ball in the middle.
     flatten: 0.42,
     spread: 3.8,
@@ -408,7 +408,7 @@ export default function VouchGraphScene({
         ),
       );
       hazeMaterial = new THREE.PointsMaterial({
-        color: new THREE.Color('#f0a8d0'),
+        color: new THREE.Color('#a8f0c8'),
         size: 0.07,
         map: dot,
         transparent: true,

@@ -9,19 +9,19 @@
  * contrast, big tap targets, and meaning never carried by colour alone.
  */
 @theme {
-  /* Ink and paper — the "Almoayyed" theme.
+  /* Ink and paper — the "Almoayyed" recipe, cut in green.
 
-     The neutrals are tinted toward the gradient's plum (hue 330) rather than
-     the blue-grey they used to be, so text and rules sit inside the palette
-     instead of on top of it. Lightness values are unchanged where they could
-     be; the two that moved, moved because they had to (see below). */
-  --color-ink-900: oklch(0.19 0.020 330);
-  --color-ink-700: oklch(0.36 0.022 330);
+     The neutrals are tinted toward the ground's green (hue 160) rather than
+     the old blue-grey, so text and rules sit inside the palette instead of on
+     top of it. Lightness values are unchanged where they could be; the two
+     that moved, moved because they had to (see below). */
+  --color-ink-900: oklch(0.19 0.018 160);
+  --color-ink-700: oklch(0.36 0.020 160);
 
   /* Darkened from 0.53. The gradient ground is a shade deeper than the flat
      near-white it replaced, and at the old value captions measured 3.61:1
      against it — under the 4.5 floor. */
-  --color-ink-500: oklch(0.47 0.022 330);
+  --color-ink-500: oklch(0.47 0.020 160);
 
   /* Darkened from 0.64, for the same reason and more sharply: chips and switch
      tracks put this border directly on the gradient ground, where the old
@@ -32,10 +32,10 @@
      mid-tone the gradient passes through, and a mid-tone token on a mid-tone
      ground has nowhere to go: swept from 0.30 to 0.80, no veil value brought
      ink-500 or ink-300 to their floors. The tokens had to move. */
-  --color-ink-300: oklch(0.56 0.020 330);
+  --color-ink-300: oklch(0.56 0.018 160);
 
-  --color-ink-200: oklch(0.74 0.014 330);
-  --color-ink-100: oklch(0.92 0.010 330);
+  --color-ink-200: oklch(0.74 0.013 160);
+  --color-ink-100: oklch(0.92 0.010 160);
 
   /* The page ground.
 
@@ -43,35 +43,36 @@
      token is the DARKEST point that ground can reach, so every pair measured
      against `paper` is measured against the worst case rather than an average.
      See app-background.tsx for how the veil pins it there. */
-  --color-paper: #e2dce1;
+  --color-paper: #dce1df;
   --color-paper-raised: oklch(1 0 0);
 
-  /* Wine, taken from the gradient's own plum stops. The palette used to be
-     Kerala green; it moves here so the accent belongs to the ground it sits
-     on rather than fighting it. */
-  --color-brand-700: oklch(0.38 0.13 345);
-  --color-brand-600: oklch(0.46 0.15 345);
-  /* 0.64 rather than following the 0.56 step. The hero's primary button puts
-     near-black plum text on this colour, and wine is intrinsically darker than
-     the green it replaced: at 0.56 that label measured 3.64:1. Lightening the
-     one step that carries dark text is better than darkening the text, which
-     would have to leave the palette to find the contrast. */
-  --color-brand-500: oklch(0.64 0.16 345);
-  --color-brand-100: oklch(0.93 0.04 345);
+  /* Green — the standard palette, and the ground is cut to match it rather
+     than the other way round. Kept in the same hue family as the gradient's
+     dark stops so the accent belongs to the surface it sits on. */
+  --color-brand-700: oklch(0.42 0.12 150);
+  --color-brand-600: oklch(0.52 0.15 150);
+  /* The standard light green, and the brightest step in the scale.
+
+     It is lighter than an even progression would put it because of what it
+     carries: the hero's primary button sits near-black text on this colour, so
+     it has to be light enough to be a background for dark type (7.65:1) while
+     still reading as the same green as the darker steps. */
+  --color-brand-500: oklch(0.72 0.18 150);
+  --color-brand-100: oklch(0.94 0.05 150);
 
   /* The hero band, and only the hero band.
 
-     Now the gradient's own near-black plum rather than a green-black, so the
-     banner reads as the deep end of the same palette. The WebGL graph is
-     additively blended and still needs a dark ground to glow on. */
-  --color-night-900: oklch(0.20 0.085 340);
-  --color-night-800: oklch(0.26 0.090 340);
-  --color-night-700: oklch(0.34 0.090 340);
+     The gradient's own near-black green, so the banner reads as the deep end
+     of the same palette. The WebGL graph is additively blended and still needs
+     a dark ground to glow on. */
+  --color-night-900: oklch(0.20 0.060 160);
+  --color-night-800: oklch(0.26 0.065 160);
+  --color-night-700: oklch(0.34 0.065 160);
   /* Secondary text on the band. Measured against night-900, not guessed. */
-  --color-night-300: oklch(0.86 0.030 340);
+  --color-night-300: oklch(0.86 0.030 160);
 
-  /* Trust marker for verified members. Deliberately kept blue — distinct from
-     the wine brand, so a badge never reads as decoration. */
+  /* Trust marker for verified members. Deliberately blue — distinct from the
+     brand green, so a badge never reads as decoration. */
   --color-verify-600: oklch(0.47 0.13 255);
   --color-verify-100: oklch(0.94 0.03 255);
 

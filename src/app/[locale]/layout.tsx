@@ -44,7 +44,7 @@ export const viewport: Viewport = {
   // Never block zoom: some users need to enlarge text to read it at all.
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#310527',
+  themeColor: '#052718',
 };
 
 export default async function LocaleLayout({ children, params }: LayoutProps) {

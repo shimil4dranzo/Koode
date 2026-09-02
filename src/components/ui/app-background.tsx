@@ -1,10 +1,26 @@
-import { GradientBackground } from '@/components/ui/almoayyed';
+import { GradientBackground, type GradientStops } from '@/components/ui/almoayyed';
+
+/**
+ * The Almoayyed recipe re-cut in the app's green.
+ *
+ * The stop positions, falloffs and grain are the original — that geometry is
+ * what makes it look hand-finished rather than like a CSS gradient. Only the
+ * four colours move, from the source's plum to the greens the rest of the
+ * palette is built on, so the accent belongs to the ground instead of sitting
+ * on a wash from a different family.
+ */
+const KOODE_GREEN: GradientStops = {
+  base: '#D5D7D5',
+  a: '#052718',
+  b: '#06301C',
+  highlight: '#FFFFFF',
+};
 
 /**
  * The app's ground: the Almoayyed gradient, veiled to a legible range.
  *
  * The gradient on its own spans #FFFFFF through #D7D5D5 down to a near-black
- * plum (#310527). That range is the problem: this app's text is ink on a light
+ * green (#052718). That range is the problem: this app's text is ink on a light
  * ground, and measured against the raw gradient, body text lands anywhere
  * between 18:1 and 1.04:1 depending on where on the page it happens to sit.
  * Since the layer is fixed, scrolling changes which text sits over which
@@ -12,8 +28,8 @@ import { GradientBackground } from '@/components/ui/almoayyed';
  *
  * The veil solves that by clamping the range. It is not a taste value:
  *
- *   - Rendered at 0.88, which puts the darkest reachable ground at #e6e1e5.
- *   - The `--color-paper` token is set to #e2dce1, from a 0.86 veil — very
+ *   - Rendered at 0.88, which puts the darkest reachable ground at #e1e5e3.
+ *   - The `--color-paper` token is set to #dce1df, from a 0.86 veil — very
  *     slightly DARKER than anything this actually paints. Every contrast pair
  *     in the app is measured against that token, so each one is checked
  *     against a ground a little worse than the real one. The grain pass below
@@ -27,7 +43,7 @@ import { GradientBackground } from '@/components/ui/almoayyed';
 export function AppBackground() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
-      <GradientBackground className="absolute inset-0" />
+      <GradientBackground className="absolute inset-0" stops={KOODE_GREEN} />
 
       {/* The measured veil. Everything above this line is decoration; this
           line is what keeps the page readable. */}
