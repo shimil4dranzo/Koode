@@ -85,7 +85,11 @@
     "featureVerified": "Verified job listings",
     "featureNearby": "Jobs near your location",
     "featureLocal": "Local businesses hiring",
-    "featureEveryone": "Opportunities for everyone"
+    "featureEveryone": "Opportunities for everyone",
+    "ctaSeekerTitle": "Looking for work",
+    "ctaSeekerBody": "Browse every opening near you. No account needed.",
+    "ctaEmployerTitle": "Hiring someone",
+    "ctaEmployerBody": "Post an opening in a minute with an e-mail or Google."
   },
   "auth": {
     "signInTitle": "Sign in to Koode",

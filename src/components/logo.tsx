@@ -18,10 +18,13 @@ import { cn } from '@/lib/cn';
  * The letters use `currentColor` so the mark can sit on light or dark ground;
  * the smile keeps its green in both, because that is the part people recognise.
  *
- * There is deliberately no export for the smile on its own. It was tried as an
- * inline flourish beside a line of text and read as the wordmark with the word
- * missing — a broken logo rather than a decoration. The smile appears either
- * inside the wordmark or inside the tile below, never loose.
+ * There is deliberately only one export here, and it is the whole wordmark.
+ * The smile was tried twice on its own — loose beside a line of text, and in a
+ * rounded tile at the foot of the page — and both times it read as the mark
+ * with the name missing rather than as a decoration: a dark blob with a
+ * squiggle in it. The PWA and favicon are real image files in /public, so
+ * nothing needed a tile version. The smile appears inside the wordmark or not
+ * at all.
  */
 
 /** Geometry shared by the wordmark and the compact mark. */
@@ -84,37 +87,5 @@ export function LogoWordmark({
         strokeWidth={10}
       />
     </svg>
-  );
-}
-
-/**
- * The compact mark: the smile alone, in a rounded tile.
- *
- * Used where the full wordmark would be illegible — the PWA icon, a favicon,
- * an avatar-sized slot. Derived from the wordmark rather than invented, so the
- * two read as one identity.
- *
- * Decorative by default: wherever this appears the name is written beside it.
- */
-export function LogoMark({ className }: { className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-xl bg-navy-900',
-        className,
-      )}
-    >
-      <svg
-        viewBox="40 60 122 50"
-        className="w-[64%] text-brand-500"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={14}
-        strokeLinecap="round"
-      >
-        <path d={SMILE_PATH} />
-      </svg>
-    </span>
   );
 }

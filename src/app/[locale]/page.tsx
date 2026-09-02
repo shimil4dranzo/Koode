@@ -3,8 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageGlow } from '@/components/ui/decor';
-import { LogoMark, LogoWordmark } from '@/components/logo';
-import { TownscapeArt } from '@/components/art';
+import { LogoWordmark } from '@/components/logo';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { CategoryRing } from '@/components/category-ring';
 import { PhoneShowcase } from '@/components/phone-showcase';
@@ -526,26 +525,69 @@ export default async function HomePage({ params }: PageProps) {
         ) : null}
       </section>
 
-      {/* ---- Final call ----------------------------------------------------- */}
-      <section className="relative overflow-hidden border-t border-ink-200 bg-brand-700">
-        {/* The street, drawn into the band rather than sat above it. Low
-            opacity so the heading keeps its contrast — the text sits on
-            brand-700, and this never lightens that ground. */}
-        <TownscapeArt className="pointer-events-none absolute inset-x-0 bottom-0 h-48 w-full text-white/20" />
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between lg:py-14">
-          <div className="flex items-center gap-4" data-reveal="swing">
-            <LogoMark className="size-12" />
-            <div>
-              <h2 className="text-xl font-semibold text-white">{t('ctaTitle')}</h2>
-              <p className="mt-1 text-brand-100">{t('ctaBody')}</p>
-            </div>
+      {/* ---- Final call: two doors, not one -------------------------------
+
+        The band used to carry a townscape drawing at low opacity across its
+        full width, a navy tile holding the logo's smile, and a single "Get
+        started" button.
+
+        All three were wrong. The drawing ran directly behind the heading and
+        the body, so the text sat on a moving field of lines. The tile read as
+        a dark blob with a squiggle in it rather than as a mark — the same
+        mistake as the loose smile elsewhere, in a box. And the single button
+        contradicted its own copy: it told a job seeker no account was needed
+        and then offered them a sign-in.
+
+        Two paths instead, because the page has two audiences and they need
+        different things. The one that needs nothing is stated first.
+      */}
+      <section className="border-t border-ink-200 bg-brand-700">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
+          <h2 className="text-xl font-semibold text-white sm:text-2xl" data-reveal="lift">
+            {t('ctaTitle')}
+          </h2>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                title: t('ctaSeekerTitle'),
+                body: t('ctaSeekerBody'),
+                action: t('findWork'),
+                href: '/openings',
+                // The seeker's path is the one that needs no account, so it
+                // gets the solid button.
+                solid: true,
+              },
+              {
+                title: t('ctaEmployerTitle'),
+                body: t('ctaEmployerBody'),
+                action: t('postWork'),
+                href: '/openings/new',
+                solid: false,
+              },
+            ].map((path, index) => (
+              <div
+                key={path.href}
+                data-reveal="card"
+                style={{ '--reveal-delay': `${index * 90}ms` } as StyleWithVars}
+                className="flex flex-col items-start gap-3 rounded-2xl border border-white/25 bg-white/10 p-5"
+              >
+                <h3 className="text-lg font-semibold text-white">{path.title}</h3>
+                <p className="flex-1 text-brand-100">{path.body}</p>
+                <Link
+                  href={path.href}
+                  className={
+                    path.solid
+                      ? 'inline-flex min-h-touch items-center gap-2 rounded-lg bg-white px-5 font-medium text-brand-700 transition-colors hover:bg-brand-100'
+                      : 'inline-flex min-h-touch items-center gap-2 rounded-lg border border-white/50 px-5 font-medium text-white transition-colors hover:bg-white/10'
+                  }
+                >
+                  {path.action}
+                  <IconArrowRight className="size-4.5" />
+                </Link>
+              </div>
+            ))}
           </div>
-          <Link
-            href="/sign-in"
-            className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-lg bg-white px-6 text-lg font-medium text-brand-700 hover:bg-brand-100"
-          >
-            {t('ctaAction')}
-          </Link>
         </div>
       </section>
     </div>
