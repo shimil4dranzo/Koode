@@ -42,6 +42,12 @@ describe('phone numbers never leave the audited path', () => {
   const ALLOWED_TO_SELECT_PHONE = new Set([
     // The one reveal path, rate-limited and audited.
     'src/server/services/requirement.service.ts',
+    // The candidate-contact reveal: an employer who has SHORTLISTED an
+    // applicant to their own posting asks to see that applicant's number. It
+    // is the seeker-side mirror of the requirement reveal above — poster-only,
+    // status-gated, rate-limited on the account, and written to the audit log
+    // before the number is returned. See revealCandidateContact.
+    'src/server/services/interest.service.ts',
     // Authentication: resolving a number to a person, and the claim flow,
     // which must send an SMS to it.
     'src/server/services/auth.service.ts',

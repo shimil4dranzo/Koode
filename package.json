@@ -28,7 +28,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:fix": "eslint . --fix",
     "check:contrast": "tsx scripts/check-contrast.ts",
-    "audit:contrast": "tsx scripts/audit-contrast-runtime.ts"
+    "audit:contrast": "tsx scripts/audit-contrast-runtime.ts",
+    "e2e:workflows": "node scripts/e2e-workflows.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

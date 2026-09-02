@@ -10,6 +10,8 @@ import { PageGlow } from '@/components/ui/decor';
 import { ApiError, api } from '@/lib/api';
 import { useApiMessages } from '@/lib/api-messages';
 import type { LocalityOption } from '@/server/services/locality.service';
+import type { AccountType } from '@/server/domain/constants';
+import { stripLocale } from '@/i18n/paths';
 
 /**
  * Sign in and create account, in one component.
@@ -36,11 +38,70 @@ type AuthResponse =
   | { status: 'signed_in'; person: { publicId: string } }
   | { status: 'needs_consent'; consentVersion: string };
 
+/**
+ * "What brings you here?" — two big cards, one tap.
+ *
+ * A radio group, not a select: there are exactly two answers, both need a
+ * sentence of explanation, and on a phone two tappable cards beat a dropdown
+ * nobody reads. It is also the first thing on the form, because the answer
+ * shapes what the rest of the flow asks for.
+ */
+function AccountTypeChooser({
+  value,
+  onChange,
+}: {
+  value: AccountType;
+  onChange: (next: AccountType) => void;
+}) {
+  const t = useTranslations('auth');
+  const options: Array<{ value: AccountType; label: string; hint: string }> = [
+    { value: 'seeker', label: t('roleSeeker'), hint: t('roleSeekerHint') },
+    { value: 'employer', label: t('roleEmployer'), hint: t('roleEmployerHint') },
+  ];
+  return (
+    <fieldset>
+      <legend className="text-base font-medium">{t('roleLegend')}</legend>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <label
+              key={option.value}
+              className={
+                'flex cursor-pointer flex-col gap-1 rounded-xl border p-4 transition-colors ' +
+                (selected
+                  ? 'border-brand-600 bg-brand-100/60'
+                  : 'border-ink-300 bg-paper-raised hover:border-brand-600')
+              }
+            >
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="accountType"
+                  value={option.value}
+                  checked={selected}
+                  onChange={() => onChange(option.value)}
+                  className="size-4 accent-brand-600"
+                />
+                <span className="font-medium">{option.label}</span>
+              </span>
+              <span className="text-sm text-ink-700">{option.hint}</span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 export function SignInFlow({
   localities,
   googleEnabled,
   googleDraft,
   initialErrorKey,
+  next,
+  initialMode,
+  initialAccountType,
 }: {
   localities: LocalityOption[];
   /** True only when the server has Google credentials configured. */
@@ -49,6 +110,16 @@ export function SignInFlow({
   googleDraft?: GoogleDraft;
   /** An auth.* key carried back from an OAuth redirect, if any. */
   initialErrorKey?: string;
+  /**
+   * Where to go once signed in. Set by the places that send people here —
+   * an opening's "apply" button, mainly — and validated server-side to a
+   * same-site path, so this component never redirects off the site.
+   */
+  next?: string;
+  /** Open on the sign-up form directly, e.g. from "Create a profile and apply". */
+  initialMode?: 'login' | 'register';
+  /** Pre-select what the person came for, when the link that sent them knew. */
+  initialAccountType?: AccountType;
 }) {
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
@@ -57,7 +128,10 @@ export function SignInFlow({
   const locale = useLocale();
   const router = useRouter();
 
-  const [mode, setMode] = useState<Mode>(googleDraft ? 'google-complete' : 'login');
+  const [mode, setMode] = useState<Mode>(
+    googleDraft ? 'google-complete' : (initialMode ?? 'login'),
+  );
+  const [accountType, setAccountType] = useState<AccountType>(initialAccountType ?? 'seeker');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -98,7 +172,11 @@ export function SignInFlow({
   }
 
   function finish(): void {
-    router.replace('/');
+    // A fresh seeker lands on onboarding; anyone else goes where they were
+    // headed, or home. `next` is already a validated same-site path.
+    const fallback = accountType === 'seeker' && mode !== 'login' ? '/profile/onboarding' : '/';
+    // `next` is a full site path; next-intl's router adds the locale itself.
+    router.replace(stripLocale(next, locale) ?? fallback);
     router.refresh();
   }
 
@@ -120,6 +198,7 @@ export function SignInFlow({
         password,
         displayName,
         localityPublicId: localityPublicId || undefined,
+        accountType,
         locale,
         consentVersion: CURRENT_CONSENT_VERSION_CLIENT,
       });
@@ -131,6 +210,7 @@ export function SignInFlow({
       await api.post('/api/auth/register-google', {
         displayName,
         localityPublicId: localityPublicId || undefined,
+        accountType,
         locale,
         consentVersion: CURRENT_CONSENT_VERSION_CLIENT,
       });
@@ -194,9 +274,8 @@ export function SignInFlow({
       {/* A full-page redirect, not a popup: popups die under mobile browsers'
           blockers. A raw anchor because the route answers with a 302 to
           Google, which client navigation cannot follow. */}
-      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
-        href="/api/auth/google/start?mode=login"
+        href={`/api/auth/google/start?mode=login&role=${accountType}${next ? `&next=${encodeURIComponent(next)}` : ''}`}
         className="inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border border-ink-300 bg-paper-raised px-6 text-lg font-medium hover:bg-ink-100"
       >
         <GoogleGlyph />
@@ -285,6 +364,8 @@ export function SignInFlow({
             <h1 className="text-2xl font-semibold">{t('createAccount')}</h1>
           </div>
 
+          <AccountTypeChooser value={accountType} onChange={setAccountType} />
+
           <TextField
             label={t('nameLabel')}
             error={fieldMessage(fieldError, 'displayName')}
@@ -356,6 +437,8 @@ export function SignInFlow({
               {t('googleCompleteSubtitle', { email: googleDraft.email })}
             </p>
           </div>
+
+          <AccountTypeChooser value={accountType} onChange={setAccountType} />
 
           <TextField
             label={t('nameLabel')}

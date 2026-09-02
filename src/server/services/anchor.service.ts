@@ -315,3 +315,44 @@ export async function listOrgsActorCanVerify(
         : anchorOrg.locality.nameEn,
   }));
 }
+
+export type OwnMembership = {
+  anchorOrgPublicId: string;
+  orgName: string;
+  orgType: string;
+  status: MembershipStatus;
+  membershipRef: string | null;
+  requestedAt: string;
+  verifiedAt: string | null;
+};
+
+/**
+ * The organisations this person has asked to confirm them, and where each
+ * request stands. Drives the verification card on their dashboard.
+ */
+export async function listOwnMemberships(
+  person: CurrentPerson,
+  locale: string,
+): Promise<OwnMembership[]> {
+  const rows = await prisma.anchorMembership.findMany({
+    where: { personId: person.id },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      status: true,
+      membershipRef: true,
+      createdAt: true,
+      verifiedAt: true,
+      anchorOrg: { select: { publicId: true, nameEn: true, nameMl: true, type: true } },
+    },
+  });
+
+  return rows.map((row) => ({
+    anchorOrgPublicId: row.anchorOrg.publicId,
+    orgName: locale === 'ml' ? (row.anchorOrg.nameMl ?? row.anchorOrg.nameEn) : row.anchorOrg.nameEn,
+    orgType: row.anchorOrg.type,
+    status: row.status as MembershipStatus,
+    membershipRef: row.membershipRef,
+    requestedAt: row.createdAt.toISOString(),
+    verifiedAt: row.verifiedAt?.toISOString() ?? null,
+  }));
+}

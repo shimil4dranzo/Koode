@@ -165,8 +165,10 @@ async function seedCategories(): Promise<Map<string, bigint>> {
   return ids;
 }
 
-async function seedAnchorOrgs(localityIds: KeyMap): Promise<bigint> {
-  let firstId: bigint | null = null;
+async function seedAnchorOrgs(localityIds: KeyMap): Promise<Map<string, bigint>> {
+  // Keyed by org type: the association verifies traders, the college verifies
+  // graduates, and the sample people need to reach the right one.
+  const ids = new Map<string, bigint>();
 
   for (const org of SEED_ANCHOR_ORGS) {
     const localityId = localityIds.get(org.localityKey);
@@ -196,12 +198,12 @@ async function seedAnchorOrgs(localityIds: KeyMap): Promise<bigint> {
           select: { id: true },
         });
 
-    firstId ??= row.id;
+    ids.set(org.type, row.id);
   }
 
   console.log(`  anchor orgs  : ${SEED_ANCHOR_ORGS.length}`);
-  if (firstId === null) throw new Error('No anchor org seeded');
-  return firstId;
+  if (ids.size === 0) throw new Error('No anchor org seeded');
+  return ids;
 }
 
 /**
@@ -238,18 +240,19 @@ async function grantSeedAdmins(): Promise<void> {
 async function seedSamplePeople(
   localityIds: KeyMap,
   categoryIds: Map<string, bigint>,
-  anchorOrgId: bigint,
+  anchorOrgIds: Map<string, bigint>,
 ): Promise<void> {
   if (process.env.NODE_ENV === 'production') {
     console.log('  sample data  : skipped (NODE_ENV=production)');
     return;
   }
 
-  const existing = await prisma.person.count();
-  if (existing > 0) {
-    console.log(`  sample data  : skipped (${existing} people already exist)`);
-    return;
-  }
+  // Idempotent per person, not all-or-nothing. A seed that skips itself the
+  // moment one row exists cannot add a new persona to a database that already
+  // has the old ones — which is exactly what a growing sample set needs. So
+  // each persona is created if absent and lightly updated if present; real
+  // sign-ups never share these example.com addresses, so nothing of theirs is
+  // touched.
 
   const edakkara = localityIds.get('kl-mpm-nilambur-edakkara');
   const vazhikkadavu = localityIds.get('kl-mpm-nilambur-vazhikkadavu');
@@ -265,10 +268,15 @@ async function seedSamplePeople(
       phone: '+919846000001',
       email: 'abdul@example.com',
       displayName: 'അബ്ദുൽ റഹ്‌മാൻ',
-      headline: 'ഹാർഡ്‌വെയർ കട ഉടമ, കെ.വി.വി.ഇ.എസ്. അംഗം',
+      headline: 'ഹാർഡ്‌വെയർ കട ഉടമ, വ്യാപാരി സംഘടനാ അംഗം',
       localityId: edakkara,
       skills: [] as string[],
+      education: null as string | null,
+      accountType: 'employer' as const,
+      // Office-bearer of the traders' association: verifies its members.
       verifiedMember: true,
+      verifiedBy: 'merchant_assoc' as string | null,
+      memberRole: 'office_bearer' as 'office_bearer' | 'member',
     },
     {
       phone: '+919846000002',
@@ -277,7 +285,11 @@ async function seedSamplePeople(
       headline: 'ഇലക്ട്രീഷ്യൻ, 12 വർഷം പരിചയം',
       localityId: edakkara,
       skills: ['electrician'],
+      education: null as string | null,
+      accountType: 'seeker' as const,
       verifiedMember: false,
+      verifiedBy: null as string | null,
+      memberRole: 'member' as 'office_bearer' | 'member',
     },
     {
       phone: '+919846000003',
@@ -286,7 +298,11 @@ async function seedSamplePeople(
       headline: 'അക്കൗണ്ടന്റ്, ജി.എസ്.ടി. ഫയലിംഗ്',
       localityId: edakkara,
       skills: ['accountant'],
+      education: null as string | null,
+      accountType: 'seeker' as const,
       verifiedMember: false,
+      verifiedBy: null as string | null,
+      memberRole: 'member' as 'office_bearer' | 'member',
     },
     {
       phone: '+919846000004',
@@ -295,11 +311,47 @@ async function seedSamplePeople(
       headline: 'ചുമട്ട് തൊഴിലാളി, ദിവസ ജോലി',
       localityId: vazhikkadavu,
       skills: [],
+      education: null as string | null,
+      accountType: 'seeker' as const,
       verifiedMember: false,
+      verifiedBy: null as string | null,
+      memberRole: 'member' as 'office_bearer' | 'member',
+    },
+    {
+      phone: '+919846000005',
+      email: 'anju@example.com',
+      displayName: 'അഞ്ജു എസ്.',
+      headline: 'ബി.കോം ബിരുദധാരി, ടാലി, ജി.എസ്.ടി. ബില്ലിംഗ്',
+      localityId: edakkara,
+      skills: ['billing-staff', 'accountant'],
+      education: 'ബി.കോം 2024, എടക്കര ആർട്സ് & സയൻസ് കോളേജ്' as string | null,
+      accountType: 'seeker' as const,
+      // A graduate whose college has confirmed her — the verified-profile
+      // story the launch plan leads with.
+      verifiedMember: true,
+      verifiedBy: 'college' as string | null,
+      memberRole: 'member' as 'office_bearer' | 'member',
     },
   ];
 
   for (const person of people) {
+    const already = await prisma.person.findUnique({
+      where: { email: person.email },
+      select: { id: true },
+    });
+    if (already) {
+      await prisma.person.update({
+        where: { id: already.id },
+        data: {
+          headline: person.headline,
+          education: person.education,
+          accountType: person.accountType,
+        },
+      });
+      createdIds.set(person.phone, already.id);
+      continue;
+    }
+
     const created = await prisma.person.create({
       data: {
         publicId: createId(),
@@ -312,6 +364,8 @@ async function seedSamplePeople(
         passwordHash: await hashPassword('koode1234'),
         displayName: person.displayName,
         headline: person.headline,
+        education: person.education,
+        accountType: person.accountType,
         localityId: person.localityId,
         status: 'active',
         claimedAt: new Date(),
@@ -334,12 +388,14 @@ async function seedSamplePeople(
       });
     }
 
-    if (person.verifiedMember) {
+    if (person.verifiedMember && person.verifiedBy) {
+      const anchorOrgId = anchorOrgIds.get(person.verifiedBy);
+      if (anchorOrgId === undefined) throw new Error(`No seeded org of type ${person.verifiedBy}`);
       await prisma.anchorMembership.create({
         data: {
           personId: created.id,
           anchorOrgId,
-          role: 'office_bearer',
+          role: person.memberRole,
           status: 'verified',
           verifiedAt: new Date(),
         },
@@ -402,6 +458,49 @@ async function seedSampleActivity(
    * and half, spread across the tiers.
    */
   const requirements = [
+    // The three the owner asked for by name in the voice note: "sales staff,
+    // billing staff, drivers needed" — the kind of posting a shop on the main
+    // road actually puts up. Two in Malayalam, one in English, because both
+    // happen.
+    {
+      title: 'സെയിൽസ് സ്റ്റാഫിനെ ആവശ്യമുണ്ട്',
+      description:
+        'ടെക്സ്റ്റൈൽ കടയിലേക്ക്. രാവിലെ 10 മുതൽ രാത്രി 8 വരെ. ഉപഭോക്താക്കളോട് സംസാരിക്കാൻ കഴിയണം. മുൻപരിചയം ഗുണകരം, നിർബന്ധമല്ല.',
+      categorySlug: 'sales-counter-staff',
+      localityId: edakkara,
+      engagementType: 'permanent',
+      payMin: 11000,
+      payMax: 14000,
+      payPeriod: 'monthly',
+      vacancies: 2,
+      contactPreference: 'whatsapp',
+    },
+    {
+      title: 'Billing staff needed',
+      description:
+        'Supermarket billing counter. Must be comfortable with a billing machine and basic computer work. Training given. Day shift, weekly off.',
+      categorySlug: 'billing-staff',
+      localityId: edakkara,
+      engagementType: 'permanent',
+      payMin: 12000,
+      payMax: 15000,
+      payPeriod: 'monthly',
+      vacancies: 1,
+      contactPreference: 'call',
+    },
+    {
+      title: 'ഡ്രൈവർ വേണം (ലൈറ്റ് വെഹിക്കിൾ)',
+      description:
+        'കടയുടെ ഡെലിവറി വാനിന്. എൽ.എം.വി. ലൈസൻസ് നിർബന്ധം. എടക്കര–നിലമ്പൂർ റൂട്ട്. രാവിലെ 9 മുതൽ വൈകിട്ട് 6 വരെ.',
+      categorySlug: 'driver-light-vehicle',
+      localityId: edakkara,
+      engagementType: 'permanent',
+      payMin: 15000,
+      payMax: 18000,
+      payPeriod: 'monthly',
+      vacancies: 1,
+      contactPreference: 'call',
+    },
     {
       title: 'Counter staff for a hardware shop',
       description:
@@ -481,6 +580,12 @@ async function seedSampleActivity(
 
   let posted = 0;
   for (const requirement of requirements) {
+    const present = await prisma.requirement.findFirst({
+      where: { postedByPersonId: shopOwner, title: requirement.title },
+      select: { id: true },
+    });
+    if (present) continue;
+
     const categoryId = categoryIds.get(requirement.categorySlug);
     if (categoryId === undefined) continue;
 
@@ -528,6 +633,16 @@ async function seedSampleActivity(
   ];
 
   for (const recommendation of recommendations) {
+    const said = await prisma.recommendation.findFirst({
+      where: {
+        referrerPersonId: shopOwner,
+        subjectPersonId: recommendation.subject,
+        status: 'active',
+      },
+      select: { id: true },
+    });
+    if (said) continue;
+
     await prisma.recommendation.create({
       data: {
         publicId: createId(),
@@ -547,13 +662,40 @@ async function seedSampleActivity(
 
   // One candidate has raised their hand, so the employer's view of interested
   // candidates — with their recommendations attached — has something in it.
+  // The graduate has applied for the billing job and been shortlisted: the
+  // employer's candidates view has a match to show, and her dashboard has a
+  // status to read.
+  const graduate = peopleByPhone.get('+919846000005');
+  const billingJob = await prisma.requirement.findFirst({
+    where: { postedByPersonId: shopOwner, title: 'Billing staff needed' },
+    select: { id: true },
+  });
+  if (graduate !== undefined && billingJob) {
+    const applied = await prisma.interest.findUnique({
+      where: { requirementId_personId: { requirementId: billingJob.id, personId: graduate } },
+      select: { id: true },
+    });
+    if (!applied) await prisma.interest.create({
+      data: {
+        publicId: createId(),
+        requirementId: billingJob.id,
+        personId: graduate,
+        status: 'shortlisted',
+      },
+    });
+  }
+
   const wiringJob = await prisma.requirement.findFirst({
     where: { postedByPersonId: shopOwner, engagementType: 'contract' },
     select: { id: true },
   });
 
   if (wiringJob) {
-    await prisma.interest.create({
+    const asked = await prisma.interest.findUnique({
+      where: { requirementId_personId: { requirementId: wiringJob.id, personId: electrician } },
+      select: { id: true },
+    });
+    if (!asked) await prisma.interest.create({
       data: {
         publicId: createId(),
         requirementId: wiringJob.id,
@@ -575,8 +717,8 @@ async function main(): Promise<void> {
   const localityIds = await seedLocalities();
   await seedAdjacencies(localityIds);
   const categoryIds = await seedCategories();
-  const anchorOrgId = await seedAnchorOrgs(localityIds);
-  await seedSamplePeople(localityIds, categoryIds, anchorOrgId);
+  const anchorOrgIds = await seedAnchorOrgs(localityIds);
+  await seedSamplePeople(localityIds, categoryIds, anchorOrgIds);
   await grantSeedAdmins();
 
   console.log(

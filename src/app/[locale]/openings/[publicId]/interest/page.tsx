@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, EmptyState } from '@/components/ui/card';
 import { RecommendationList } from '@/components/profile/recommendation-list';
 import { CandidateActions } from '@/components/interest/candidate-actions';
+import { RevealCandidateContact } from '@/components/interest/reveal-candidate-contact';
 import { getCurrentPerson, type CurrentPerson } from '@/server/auth/session';
 import { isAppError } from '@/server/errors';
 import {
@@ -100,6 +101,11 @@ export default async function InterestPage({ params }: PageProps) {
                   </Badge>
                 ) : null}
                 <Badge>{t(candidate.status)}</Badge>
+                {candidate.person.skillsMatch ? (
+                  <Badge tone="open" glyph="◆">
+                    {t('skillsMatch')}
+                  </Badge>
+                ) : null}
                 {candidate.engagementOutcome ? (
                   <Badge tone="open">{tOutcome(candidate.engagementOutcome)}</Badge>
                 ) : null}
@@ -155,6 +161,14 @@ export default async function InterestPage({ params }: PageProps) {
                 status={candidate.status}
                 outcome={candidate.engagementOutcome}
               />
+
+              {/* Direct contact: appears once the employer has shortlisted. */}
+              <div className="mt-4">
+                <RevealCandidateContact
+                  interestPublicId={candidate.interestPublicId}
+                  status={candidate.status}
+                />
+              </div>
             </Card>
           ))}
         </ol>

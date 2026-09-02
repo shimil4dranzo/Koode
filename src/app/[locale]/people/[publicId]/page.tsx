@@ -57,8 +57,9 @@ export default async function PersonPage({ params }: PageProps) {
   const { locale, publicId } = await params;
   setRequestLocale(locale);
 
-  const [profile, t, tCommon, tAnchor] = await Promise.all([
+  const [profile, viewer, t, tCommon, tAnchor] = await Promise.all([
     loadOrNotFound(publicId, locale),
+    getCurrentPerson(),
     getTranslations('profile'),
     getTranslations('common'),
     getTranslations('anchor'),
@@ -80,6 +81,12 @@ export default async function PersonPage({ params }: PageProps) {
       ) : null}
 
       {profile.headline ? <p className="mt-2 text-ink-900">{profile.headline}</p> : null}
+      {profile.education ? (
+        <p className="mt-1 text-ink-700">
+          <span className="font-medium text-ink-900">{t('educationLabel')}:</span>{' '}
+          {profile.education}
+        </p>
+      ) : null}
 
       {profile.memberOf.length > 0 ? (
         <ul className="mt-2 flex flex-col gap-1 text-sm text-ink-700">
@@ -116,6 +123,28 @@ export default async function PersonPage({ params }: PageProps) {
           </div>
         )}
       </section>
+
+      {/*
+        The one action a visitor can take on somebody's profile: put their
+        name to it. It leads to the recommend form with this person fixed as
+        the subject, so no phone number is ever typed for them. Signed-out
+        visitors are sent to sign in and straight back here.
+      */}
+      {!profile.isSelf ? (
+        <div className="mt-6 rounded-2xl border border-brand-600/40 bg-brand-100/40 p-4">
+          <p className="font-medium">{t('vouchHint')}</p>
+          <Link
+            href={
+              viewer
+                ? `/recommend?subject=${profile.publicId}`
+                : `/sign-in?next=${encodeURIComponent(`/${locale}/people/${profile.publicId}`)}`
+            }
+            className="mt-3 inline-flex min-h-touch items-center gap-2 rounded-lg bg-brand-600 px-5 font-medium text-white hover:bg-brand-700"
+          >
+            {t('vouchAction')}
+          </Link>
+        </div>
+      ) : null}
 
       {profile.isSelf ? (
         <p className="mt-8">

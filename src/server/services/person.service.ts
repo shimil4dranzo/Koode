@@ -1,3 +1,4 @@
+import type { AccountType } from '@/server/domain/constants';
 import { prisma } from '@/server/db/client';
 import { errors } from '@/server/errors';
 import { AUDIT_ACTIONS, recordAudit } from '@/server/audit';
@@ -24,6 +25,9 @@ export type PublicProfile = {
   publicId: string;
   displayName: string;
   headline: string | null;
+  /** Highest qualification, as the person wrote it. */
+  education: string | null;
+  accountType: AccountType;
   localityLabel: string | null;
   isVerifiedMember: boolean;
   memberOf: string[];
@@ -49,6 +53,8 @@ export async function getPublicProfile(
       publicId: true,
       displayName: true,
       headline: true,
+      education: true,
+      accountType: true,
       status: true,
       anonymizedAt: true,
       locality: { select: { nameEn: true, nameMl: true } },
@@ -87,6 +93,8 @@ export async function getPublicProfile(
     publicId: person.publicId,
     displayName: person.displayName,
     headline: person.headline,
+    education: person.education,
+    accountType: person.accountType as AccountType,
     localityLabel: person.locality
       ? locale === 'ml'
         ? (person.locality.nameMl ?? person.locality.nameEn)
@@ -116,6 +124,8 @@ export type UpdateProfileInput = {
   displayName?: string | undefined;
   localityPublicId?: string | null | undefined;
   headline?: string | null | undefined;
+  education?: string | null | undefined;
+  accountType?: AccountType | undefined;
 };
 
 export async function updateProfile(
@@ -137,6 +147,8 @@ export async function updateProfile(
         ...(input.displayName !== undefined ? { displayName: input.displayName.trim() } : {}),
         ...(localityId !== undefined ? { localityId } : {}),
         ...(input.headline !== undefined ? { headline: input.headline?.trim() || null } : {}),
+        ...(input.education !== undefined ? { education: input.education?.trim() || null } : {}),
+        ...(input.accountType !== undefined ? { accountType: input.accountType } : {}),
       },
     });
 
@@ -432,6 +444,8 @@ export async function deleteAccount(
 export async function getOwnEditableProfile(person: CurrentPerson): Promise<{
   displayName: string;
   headline: string | null;
+  education: string | null;
+  accountType: AccountType;
   localityPublicId: string | null;
 }> {
   const row = await prisma.person.findUniqueOrThrow({
@@ -439,6 +453,8 @@ export async function getOwnEditableProfile(person: CurrentPerson): Promise<{
     select: {
       displayName: true,
       headline: true,
+      education: true,
+      accountType: true,
       locality: { select: { publicId: true } },
     },
   });
@@ -446,6 +462,8 @@ export async function getOwnEditableProfile(person: CurrentPerson): Promise<{
   return {
     displayName: row.displayName,
     headline: row.headline,
+    education: row.education,
+    accountType: row.accountType as AccountType,
     localityPublicId: row.locality?.publicId ?? null,
   };
 }

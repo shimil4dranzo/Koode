@@ -424,6 +424,72 @@ What that buys and what it costs, so nobody rediscovers this the hard way:
 - **Passwords hash with node's built-in scrypt** (parameters encoded per-hash
   for future raises). No bcrypt/argon2 dependency.
 
+## The 2026-09-02 seeker-profile change — an owner decision, recorded
+
+The 2026-09-01 change above made seekers anonymous: browse, reveal, never sign
+in. On 2026-09-02 the owner supplied a launch deck and a voice note that
+describe a different product — one where job seekers *hold profiles* that
+institutions verify and neighbours vouch for — and confirmed the intent in
+writing: seekers may create a profile, but browsing and contact reveal stay
+open; a profile can be vouched for and verified by an institute or community
+body; sign-up offers both roles. This section records what was built to that
+brief, and where the earlier decisions still stand.
+
+What stays exactly as it was:
+
+- **Anonymous browsing, search and contact reveal.** No account is needed to
+  read an opening or reveal an employer's number. The voice note and the
+  written clarification both say so.
+- **Every gate from before.** `canAct`, `isPubliclyVisible`, the audited reveal
+  path, the rate limits, the consent version — untouched.
+
+What changed:
+
+- **`Person.accountType`** — `seeker | employer`, chosen at sign-up, on both
+  the password and the Google paths (the Google round trip carries it in a
+  cookie of its own, not in the signed CSRF state). It is a *default*, not a
+  permission: it decides what the dashboard leads with and what the navigation
+  offers. An employer may still apply and a seeker may still post, because in
+  a town this size the same person is often both, and a hard split would only
+  produce second accounts. Rows that predate the column read as `seeker`.
+- **`Person.education`** — one line, free text, optional. Not a structured
+  education table: Stage 1 has no résumé, and a table nobody fills is worse
+  than a line people do. An institution that verifies the person vouches for
+  it.
+- **Institutions as verifiers.** `ANCHOR_ORG_TYPES` gains `college`,
+  `training_centre` and `community_org`. Same mechanism as the traders'
+  association — an office-bearer confirms a membership request — but the
+  request side, which previously had no screen at all, now exists on the
+  seeker's dashboard. Adding a college is a seed row, not code.
+- **Vouching by profile, not by phone.** The recommendation API always accepted
+  `subjectPublicId`; the form only ever offered a phone field. "Vouch for this
+  person" on a profile now fixes the subject by id, so nobody types a third
+  party's number to say a good word about them.
+- **Direct contact, employer side.** `revealCandidateContact`: the poster of an
+  opening, for a candidate they have *shortlisted* on that opening, once, rate
+  limited, audited before the number is returned. Applying to an opening is
+  consenting to be contacted about it; shortlisting is the employer saying they
+  want to. The number does not flow at "expressed", because a one-tap
+  application must not hand a phone number to every poster somebody tapped on.
+- **Matching, stated honestly.** A category comparison: a skill matches a
+  posting for the same role or for the tier that role belongs to. It sorts a
+  seeker's matched openings (same locality first) and flags candidates on the
+  employer's screen. It is a flag beside a name, never a score, because a
+  number nobody can explain is worse than an ordering everybody can.
+- **Sign-up carries `next`.** An opening's apply button sends a signed-out
+  person to seeker sign-up and back to that opening. `safeNextPath` is the
+  whole open-redirect defence and is unit-tested against the shapes browsers
+  will follow off-site.
+- **The home page's "How Koode works"** is the deck's seven steps, each of which
+  is now a real screen — which is the only reason it is safe to promise them.
+
+Voice-note transcription: the audio was WhatsApp Opus, Manglish, and defeated
+Whisper's Malayalam decoding on three of four passes (script drift into
+Gurmukhi, repeated-character collapse). The fourth — chunked, with the language
+auto-detected — was coherent and is what the build follows. About nine seconds
+in the middle never decoded. The owner's written clarification covers the same
+ground, so nothing in the build rests on the undecoded stretch alone.
+
 ## Deviations from the brief
 
 | Brief said | What was built | Why |
@@ -464,7 +530,8 @@ expensive later.
 3. **Unclaimed profile expiry.** Currently 30 days, then personal data purged.
 4. **Requirement expiry.** Currently 30 days, extendable by the poster.
 5. **Employer verification before posting.** Currently not required — any
-   person with a verified phone may post.
+   active person may post. Seeker verification (by institution) now exists;
+   whether an employer should be verified before posting is still open.
 6. **SMS provider and budget.** Console stub only.
 7. **`lower_case_table_names`** on the real development and production servers.
 8. **Production hosting and who operates it after handover.**

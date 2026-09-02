@@ -49,6 +49,7 @@ async function saveProfile(formData: FormData): Promise<void> {
     displayName: String(formData.get('displayName') ?? ''),
     localityPublicId: String(formData.get('localityPublicId') ?? '') || null,
     headline: String(formData.get('headline') ?? '') || null,
+    education: String(formData.get('education') ?? '') || null,
   });
 
   const locale = String(formData.get('locale') ?? '');
@@ -75,7 +76,7 @@ export default async function EditProfilePage({ params, searchParams }: PageProp
     return null;
   }
 
-  const [query, editable, profile, localities, categoryGroups, t, tCommon, tErrors] =
+  const [query, editable, profile, localities, categoryGroups, t, tCommon, tErrors, tOnboarding] =
     await Promise.all([
       searchParams,
       getOwnEditableProfile(person),
@@ -85,6 +86,7 @@ export default async function EditProfilePage({ params, searchParams }: PageProp
       getTranslations('profile'),
       getTranslations('common'),
       getTranslations('errors'),
+      getTranslations('onboarding'),
     ]);
 
   return (
@@ -131,6 +133,15 @@ export default async function EditProfilePage({ params, searchParams }: PageProp
             name="headline"
             defaultValue={editable.headline ?? ''}
             placeholder={t('headlinePlaceholder')}
+            maxLength={200}
+          />
+
+          <TextField
+            label={t('educationLabel')}
+            name="education"
+            defaultValue={editable.education ?? ''}
+            placeholder={tOnboarding('educationPlaceholder')}
+            help={tOnboarding('educationHelp')}
             maxLength={200}
           />
 

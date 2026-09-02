@@ -30,11 +30,36 @@ export type PersonStatus = (typeof PERSON_STATUSES)[number];
 export const PLATFORM_ROLES = ['none', 'moderator', 'admin'] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
+/**
+ * What a person said they came here to do, chosen at sign-up.
+ *
+ * `seeker`   — looking for work. Gets the profile onboarding, the applications
+ *              view and matched openings.
+ * `employer` — hiring, or a business owner. Gets the posting flow and the
+ *              candidates view.
+ *
+ * This is a default, not a permission. An employer may still apply for work
+ * and a seeker may still post an opening — the same person is often both in a
+ * small town, and locking them out would only produce a second account. It
+ * decides what the dashboard leads with and what the navigation offers.
+ */
+export const ACCOUNT_TYPES = ['seeker', 'employer'] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+
+/**
+ * `college`, `training_centre` and `community_org` are the institutions the
+ * PDF names as verifiers: they vouch that a person is who their profile says,
+ * the way the merchants' association vouches for a trader. Same mechanism —
+ * an office-bearer of the org confirms a membership request.
+ */
 export const ANCHOR_ORG_TYPES = [
   'merchant_assoc',
   'civic_club',
   'swayamsahaya',
   'residents_assoc',
+  'college',
+  'training_centre',
+  'community_org',
 ] as const;
 export type AnchorOrgType = (typeof ANCHOR_ORG_TYPES)[number];
 

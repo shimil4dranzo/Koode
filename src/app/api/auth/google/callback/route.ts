@@ -5,9 +5,11 @@ import { env } from '@/server/env';
 import { LOCALE_COOKIE, routing } from '@/i18n/routing';
 import { createSession, getCurrentPerson } from '@/server/auth/session';
 import { readMeta } from '@/server/http/request';
+import { safeNextPath } from '@/server/http/next-path';
 import { AUDIT_ACTIONS, recordAudit, recordAuditSafely } from '@/server/audit';
 import {
   GOOGLE_SIGNUP_COOKIE,
+  GOOGLE_INTENT_COOKIE,
   GOOGLE_STATE_COOKIE,
   createSignupTicket,
   exchangeAndVerify,
@@ -129,7 +131,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!person || person.anonymizedAt) {
     // First time here: park the verified identity and collect name + consent
     // on the completion screen. No account exists until that is accepted.
-    const response = redirectTo(request, `/${locale}/sign-in?google=new`);
+    const intent = readIntent(request);
+    const params = new URLSearchParams({ google: 'new' });
+    if (intent.role) params.set('role', intent.role);
+    if (intent.next) params.set('next', intent.next);
+    const response = redirectTo(request, `/${locale}/sign-in?${params.toString()}`);
+    response.cookies.delete(GOOGLE_INTENT_COOKIE);
     response.cookies.set(GOOGLE_SIGNUP_COOKIE, createSignupTicket(identity), {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
@@ -153,7 +160,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     context: meta,
   });
 
-  return redirectTo(request, `/${locale}`);
+  const intent = readIntent(request);
+  const response = redirectTo(request, intent.next ?? `/${locale}`);
+  response.cookies.delete(GOOGLE_INTENT_COOKIE);
+  return response;
 }
 
 /** The locale the person was browsing in, so redirects keep their language. */
@@ -171,4 +181,14 @@ function redirectTo(request: NextRequest, path: string): NextResponse {
     response.cookies.delete(GOOGLE_STATE_COOKIE);
   }
   return response;
+}
+
+/** The role and next-path hint set by /start, re-validated here. */
+function readIntent(request: NextRequest): { role: 'seeker' | 'employer' | null; next: string | undefined } {
+  const raw = request.cookies.get(GOOGLE_INTENT_COOKIE)?.value ?? '';
+  const [role, next] = raw.split('|');
+  return {
+    role: role === 'employer' || role === 'seeker' ? role : null,
+    next: safeNextPath(next || undefined),
+  };
 }

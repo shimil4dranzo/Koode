@@ -3,7 +3,7 @@ import { errors } from '@/server/errors';
 import { newPublicId } from '@/server/ids';
 import { AUDIT_ACTIONS, recordAudit } from '@/server/audit';
 import { enforceRateLimit } from '@/server/ratelimit';
-import { canAct } from '@/server/domain/person/rules';
+import { canAct, isContactable } from '@/server/domain/person/rules';
 import { acceptsInterest, type RequirementFacts } from '@/server/domain/requirement/rules';
 import { listRecommendationsFor } from '@/server/services/recommendation.service';
 import type { CurrentPerson, RequestMeta } from '@/server/auth/session';
@@ -35,6 +35,15 @@ export type InterestedCandidate = {
     localityLabel: string | null;
     isVerifiedMember: boolean;
     skills: string[];
+    /**
+     * Whether one of the candidate's listed kinds of work is the kind this
+     * posting asks for — the same role, or the tier it belongs to. This is
+     * the "smart matching" the launch plan promises, stated honestly: a
+     * category comparison, not a model. It is a flag beside the name, not a
+     * sort order, because an employer reading the recommendations should
+     * still decide for themselves.
+     */
+    skillsMatch: boolean;
   };
   /** The reason this feature exists. */
   recommendations: RecommendationView[];
@@ -142,11 +151,20 @@ export async function listInterestedCandidates(
 ): Promise<InterestedCandidate[]> {
   const requirement = await prisma.requirement.findUnique({
     where: { publicId: requirementPublicId },
-    select: { id: true, postedByPersonId: true },
+    select: {
+      id: true,
+      postedByPersonId: true,
+      category: { select: { id: true, parentId: true } },
+    },
   });
 
   if (!requirement) throw errors.notFound();
   if (requirement.postedByPersonId !== employer.id) throw errors.forbidden();
+
+  // A skill counts as a match if it names this posting's role, or the tier
+  // that role sits in ("skilled trades" matches an electrician posting).
+  const wanted = new Set<bigint>([requirement.category.id]);
+  if (requirement.category.parentId !== null) wanted.add(requirement.category.parentId);
 
   const rows = await prisma.interest.findMany({
     where: { requirementId: requirement.id, status: { not: 'withdrawn' } },
@@ -171,7 +189,7 @@ export async function listInterestedCandidates(
             take: 1,
           },
           skills: {
-            select: { category: { select: { nameEn: true, nameMl: true } } },
+            select: { categoryId: true, category: { select: { nameEn: true, nameMl: true } } },
             take: 6,
           },
         },
@@ -212,6 +230,7 @@ export async function listInterestedCandidates(
             ? (skill.category.nameMl ?? skill.category.nameEn)
             : skill.category.nameEn,
         ),
+        skillsMatch: row.person.skills.some((skill) => wanted.has(skill.categoryId)),
       },
       recommendations: await listRecommendationsFor(row.person.id, employer, locale),
       engagementOutcome: outcomeByPerson.get(row.person.id) ?? null,
@@ -375,4 +394,88 @@ export async function listOwnInterests(
     requirementStatus: row.requirement.status as RequirementStatus,
     createdAt: row.createdAt.toISOString(),
   }));
+}
+
+export type CandidateContact = {
+  displayName: string;
+  phone: string | null;
+  contactEmail: string | null;
+};
+
+/**
+ * Show an employer how to reach a candidate they have shortlisted.
+ *
+ * This is the "direct contact" step of the launch plan, and it is the one
+ * place a job seeker's details flow to somebody else — so it is narrow on
+ * purpose:
+ *
+ *  - Only the person who posted the opening, and only for a candidate on
+ *    THAT opening. An employer cannot look up anyone who ever applied to
+ *    anything.
+ *  - Only once the candidate is shortlisted. Applying is a low-commitment tap;
+ *    it must not hand out a phone number to every poster somebody tapped on.
+ *    Shortlisting is the employer saying "I want to talk to this person",
+ *    and that is the moment the details become useful.
+ *  - Rate-limited on the employer's account with the same bucket as the
+ *    public reveal, and written to the audit log before anything is returned,
+ *    so a reveal cannot happen unlogged. The candidate's dashboard shows it.
+ *
+ * Nothing here is a permission the seeker granted per-employer: applying to
+ * an opening is consenting to be contacted about it, and the privacy notice
+ * says so.
+ */
+export async function revealCandidateContact(
+  interestPublicId: string,
+  employer: CurrentPerson,
+  meta: RequestMeta,
+): Promise<CandidateContact> {
+  if (!canAct(employer)) throw errors.forbidden();
+
+  await enforceRateLimit('contactReveal', employer.publicId);
+
+  const interest = await prisma.interest.findUnique({
+    where: { publicId: interestPublicId },
+    select: {
+      id: true,
+      status: true,
+      requirement: { select: { postedByPersonId: true } },
+      person: {
+        select: {
+          id: true,
+          publicId: true,
+          displayName: true,
+          status: true,
+          anonymizedAt: true,
+          phone: true,
+          contactEmail: true,
+        },
+      },
+    },
+  });
+
+  if (!interest) throw errors.notFound();
+  if (interest.requirement.postedByPersonId !== employer.id) throw errors.forbidden();
+  if (interest.status !== 'shortlisted') throw errors.invariant('errors.notAllowed');
+
+  const candidate = interest.person;
+  if (
+    !isContactable({ status: candidate.status as never, anonymizedAt: candidate.anonymizedAt })
+  ) {
+    throw errors.notFound();
+  }
+
+  await recordAudit({
+    action: AUDIT_ACTIONS.CANDIDATE_CONTACT_REVEALED,
+    actorPersonId: employer.id,
+    entityType: 'interest',
+    entityId: interestPublicId,
+    metadata: { candidatePublicId: candidate.publicId },
+    context: meta,
+  });
+
+  return {
+    displayName: candidate.displayName,
+    phone: candidate.phone,
+    contactEmail: candidate.contactEmail,
+  };
 }

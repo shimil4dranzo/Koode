@@ -193,12 +193,23 @@ export default async function RequirementPage({ params }: PageProps) {
             ) : (
               // Revealing needs no account; leaving a named application does.
               // Say so instead of showing a button that would 401.
-              <Link
-                href="/sign-in"
-                className="inline-flex min-h-touch items-center justify-center rounded-lg border border-ink-300 bg-paper-raised px-4 py-2.5 font-medium hover:bg-ink-100"
-              >
-                {t('signInToApply')}
-              </Link>
+              <div className="flex flex-col gap-2">
+                {/* Straight to the seeker sign-up, and straight back here
+                    afterwards — the opening they were reading is the whole
+                    reason they are creating a profile. */}
+                <Link
+                  href={`/sign-in?mode=register&role=seeker&next=${encodeURIComponent(`/${locale}/openings/${detail.publicId}`)}`}
+                  className="inline-flex min-h-touch items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-white hover:bg-brand-700"
+                >
+                  {t('applyAs')}
+                </Link>
+                <Link
+                  href={`/sign-in?next=${encodeURIComponent(`/${locale}/openings/${detail.publicId}`)}`}
+                  className="inline-flex min-h-touch items-center justify-center rounded-lg border border-ink-300 bg-paper-raised px-4 py-2.5 font-medium hover:bg-ink-100"
+                >
+                  {t('signInToApply')}
+                </Link>
+              </div>
             )}
           </>
         ) : null}

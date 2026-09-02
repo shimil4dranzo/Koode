@@ -31,6 +31,7 @@ export const POST = handler(async (request: NextRequest) => {
       email: body.email,
       password: body.password,
       displayName: body.displayName,
+      accountType: body.accountType,
       localityId,
       locale: body.locale,
       consentVersion: body.consentVersion,

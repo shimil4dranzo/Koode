@@ -10,6 +10,8 @@ import {
 } from '@/server/auth/google';
 import { getLocalityOptions } from '@/server/services/locality.service';
 import { SignInFlow } from '@/components/auth/sign-in-flow';
+import { safeNextPath } from '@/server/http/next-path';
+import { stripLocale } from '@/i18n/paths';
 
 type PageProps = {
   params: Promise<{ locale: string }>;
@@ -36,11 +38,15 @@ export default async function SignInPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const person = await getCurrentPerson();
-  if (person) redirect({ href: '/', locale });
-
   const query = await searchParams;
   const requestedError = typeof query.error === 'string' ? query.error : undefined;
+  const next = safeNextPath(query.next);
+  const initialMode = query.mode === 'register' ? 'register' : undefined;
+  const initialAccountType =
+    query.role === 'employer' ? 'employer' : query.role === 'seeker' ? 'seeker' : undefined;
+
+  const person = await getCurrentPerson();
+  if (person) redirect({ href: stripLocale(next, locale) ?? '/', locale });
 
   // A Google sign-up ticket set by the OAuth callback jumps this page
   // straight to the completion step. Read server-side: the cookie is
@@ -57,6 +63,9 @@ export default async function SignInPage({ params, searchParams }: PageProps) {
       googleEnabled={isGoogleSsoEnabled()}
       googleDraft={ticket ? { name: ticket.name, email: ticket.email } : undefined}
       initialErrorKey={requestedError ? OAUTH_ERROR_KEYS[requestedError] : undefined}
+      next={next}
+      initialMode={initialMode}
+      initialAccountType={initialAccountType}
     />
   );
 }

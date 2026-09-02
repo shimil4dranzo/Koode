@@ -638,18 +638,24 @@ export async function transitionRequirement(
 }
 
 /** The employer's own postings, including closed ones. */
+/** A poster's own posting, with how many people are waiting on it. */
+export type OwnRequirement = RequirementSummary & { interestCount: number };
+
 export async function listOwnRequirements(
   owner: CurrentPerson,
   locale: string,
-): Promise<RequirementSummary[]> {
+): Promise<OwnRequirement[]> {
   const rows = await prisma.requirement.findMany({
     where: { postedByPersonId: owner.id },
-    select: SUMMARY_SELECT,
+    select: {
+      ...SUMMARY_SELECT,
+      _count: { select: { interests: { where: { status: { not: 'withdrawn' } } } } },
+    },
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
 
-  return rows.map((row) => toSummary(row, locale));
+  return rows.map((row) => ({ ...toSummary(row, locale), interestCount: row._count.interests }));
 }
 
 /**
@@ -684,4 +690,64 @@ function isUniqueViolation(error: unknown): boolean {
     'code' in error &&
     (error as { code?: string }).code === 'P2002'
   );
+}
+
+/**
+ * Openings that fit this person: the kinds of work on their profile, nearest
+ * first.
+ *
+ * "Smart matching" in the launch plan; a category comparison in practice. A
+ * skill matches a posting for the same role, or for the tier that role sits
+ * in, so someone who lists "electrician" sees skilled-trades postings and
+ * someone who lists "skilled trades" sees electrician postings. Same-locality
+ * postings sort first; nothing is scored beyond that, because a number nobody
+ * can explain is worse than an ordering everybody can.
+ *
+ * Returns nothing for a person with no skills listed — the dashboard says so,
+ * and links to the profile, which is the honest answer rather than showing
+ * everything and calling it a match.
+ */
+export async function listMatchedRequirements(
+  person: CurrentPerson,
+  locale: string,
+  limit = 6,
+): Promise<RequirementSummary[]> {
+  const skills = await prisma.personSkill.findMany({
+    where: { personId: person.id },
+    select: { categoryId: true, category: { select: { parentId: true } } },
+  });
+  if (skills.length === 0) return [];
+
+  // The role ids themselves, plus each role's tier, plus — for a listed tier —
+  // every role under it. One query for the children keeps this to two trips.
+  const listed = skills.map((skill) => skill.categoryId);
+  const tiers = skills
+    .map((skill) => skill.category.parentId)
+    .filter((id): id is bigint => id !== null);
+  const children = await prisma.category.findMany({
+    where: { parentId: { in: listed } },
+    select: { id: true },
+  });
+  const wanted = Array.from(new Set([...listed, ...tiers, ...children.map((c) => c.id)]));
+
+  const rows = await prisma.requirement.findMany({
+    where: {
+      status: 'open',
+      hiddenAt: null,
+      expiresAt: { gt: new Date() },
+      categoryId: { in: wanted },
+      // Never their own posting, however well it matches.
+      NOT: { postedByPersonId: person.id },
+    },
+    // The raw locality id rides along for the same-place ordering below; the
+    // summary itself only ever carries the label.
+    select: { ...SUMMARY_SELECT, localityId: true },
+    orderBy: { createdAt: 'desc' },
+    take: limit * 3,
+  });
+
+  const summaries = rows.map((row) => ({ row, summary: toSummary(row, locale) }));
+  const near = summaries.filter(({ row }) => row.localityId === person.localityId);
+  const far = summaries.filter(({ row }) => row.localityId !== person.localityId);
+  return [...near, ...far].slice(0, limit).map(({ summary }) => summary);
 }

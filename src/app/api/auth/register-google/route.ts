@@ -58,6 +58,7 @@ export const POST = handler(async (request: NextRequest) => {
       data: {
         publicId,
         googleSub: identity.sub,
+        accountType: body.accountType ?? 'seeker',
         email: identity.email,
         displayName: body.displayName.trim(),
         localityId,

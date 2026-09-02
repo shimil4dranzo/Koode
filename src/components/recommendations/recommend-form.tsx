@@ -33,6 +33,14 @@ type Props = {
   categories: CategoryGroup[];
   /** Off until a real SMS provider exists — see ARCHITECTURE.md. */
   canRecommendNonUsers: boolean;
+  /**
+   * Vouching for somebody who already has a profile — reached from the
+   * "Vouch for this person" button on their page. Their identity is fixed by
+   * id, so the phone-number fields do not appear: this is the path the
+   * product leads with now that seekers hold accounts, and it needs no third
+   * party's number typed in by anyone.
+   */
+  subject?: { publicId: string; displayName: string };
 };
 
 type CreateResult = {
@@ -40,7 +48,7 @@ type CreateResult = {
   invitedSubject: { maskedPhone: string; displayName: string } | null;
 };
 
-export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
+export function RecommendForm({ categories, canRecommendNonUsers, subject }: Props) {
   const t = useTranslations('recommendations');
   const tTaxonomy = useTranslations('taxonomy');
   const tCommon = useTranslations('common');
@@ -65,8 +73,9 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
 
     try {
       const result = await api.post<CreateResult>('/api/recommendations', {
-        subjectPhone,
-        subjectName,
+        ...(subject
+          ? { subjectPublicId: subject.publicId }
+          : { subjectPhone, subjectName }),
         relationshipContext,
         categoryPublicId: categoryPublicId || null,
         note,
@@ -126,36 +135,45 @@ export function RecommendForm({ categories, canRecommendNonUsers }: Props) {
         </p>
       ) : null}
 
-      {!canRecommendNonUsers ? (
-        // Stated up front rather than as a failure after they have written a
-        // paragraph about somebody.
-        <p className="rounded-lg border border-warn-600 bg-warn-100 px-4 py-3 text-sm">
-          {t('nonUsersDisabledNotice')}
-        </p>
-      ) : null}
+      {subject ? (
+        <div className="rounded-lg border border-brand-600 bg-brand-100/50 px-4 py-3">
+          <p className="text-lg font-medium">{t('forPerson', { name: subject.displayName })}</p>
+          <p className="mt-1 text-sm text-ink-700">{t('forPersonHint')}</p>
+        </div>
+      ) : (
+        <>
+          {!canRecommendNonUsers ? (
+            // Stated up front rather than as a failure after they have written a
+            // paragraph about somebody.
+            <p className="rounded-lg border border-warn-600 bg-warn-100 px-4 py-3 text-sm">
+              {t('nonUsersDisabledNotice')}
+            </p>
+          ) : null}
 
-      <TextField
-        label={t('subjectPhone')}
-        help={t('subjectPhoneHelp')}
-        error={fieldMessage(fieldError, 'subjectPhone')}
-        type="tel"
-        inputMode="numeric"
-        autoComplete="off"
-        pattern="[0-9+()\s-]{10,17}"
-        maxLength={17}
-        value={subjectPhone}
-        onChange={(event) => setSubjectPhone(event.target.value)}
-        required
-      />
+          <TextField
+            label={t('subjectPhone')}
+            help={t('subjectPhoneHelp')}
+            error={fieldMessage(fieldError, 'subjectPhone')}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="off"
+            pattern="[0-9+()\s-]{10,17}"
+            maxLength={17}
+            value={subjectPhone}
+            onChange={(event) => setSubjectPhone(event.target.value)}
+            required
+          />
 
-      <TextField
-        label={t('subjectName')}
-        error={fieldMessage(fieldError, 'subjectName')}
-        autoComplete="off"
-        value={subjectName}
-        onChange={(event) => setSubjectName(event.target.value)}
-        required
-      />
+          <TextField
+            label={t('subjectName')}
+            error={fieldMessage(fieldError, 'subjectName')}
+            autoComplete="off"
+            value={subjectName}
+            onChange={(event) => setSubjectName(event.target.value)}
+            required
+          />
+        </>
+      )}
 
       {/* Six short phrases that all fit on screen: chips make the referrer
           read the honest options instead of grabbing the first menu entry. */}

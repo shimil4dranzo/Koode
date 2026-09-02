@@ -2,12 +2,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { env } from '@/server/env';
 import { getCurrentPerson } from '@/server/auth/session';
+import { safeNextPath } from '@/server/http/next-path';
 import {
   GOOGLE_STATE_COOKIE,
   buildAuthUrl,
   createState,
   isGoogleSsoEnabled,
   type GoogleMode,
+  GOOGLE_INTENT_COOKIE,
 } from '@/server/auth/google';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +45,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const state = createState(mode);
   const response = NextResponse.redirect(buildAuthUrl(state));
+
+  // What the person came for survives the round trip through Google in a
+  // cookie of its own, not in the signed state: the state's job is CSRF
+  // binding and its format is tested to the character. `role` pre-selects the
+  // sign-up chooser; `next` is where they were headed. Both are re-validated
+  // on the way back, so the cookie is a hint, never an instruction.
+  const role = request.nextUrl.searchParams.get('role');
+  const next = safeNextPath(request.nextUrl.searchParams.get('next') ?? undefined);
+  const intent = [role === 'employer' ? 'employer' : role === 'seeker' ? 'seeker' : '', next ?? ''].join('|');
+  if (intent !== '|') {
+    response.cookies.set(GOOGLE_INTENT_COOKIE, intent, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 600,
+    });
+  }
 
   response.cookies.set(GOOGLE_STATE_COOKIE, state, {
     httpOnly: true,

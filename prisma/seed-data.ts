@@ -899,7 +899,14 @@ export const SEED_CATEGORIES: SeedCategory[] = [
 export type SeedAnchorOrg = {
   nameEn: string;
   nameMl: string;
-  type: 'merchant_assoc' | 'civic_club' | 'swayamsahaya' | 'residents_assoc';
+  type:
+    | 'merchant_assoc'
+    | 'civic_club'
+    | 'swayamsahaya'
+    | 'residents_assoc'
+    | 'college'
+    | 'training_centre'
+    | 'community_org';
   /** References a SeedLocality.key. */
   localityKey: string;
 };
@@ -920,6 +927,17 @@ export const SEED_ANCHOR_ORGS: SeedAnchorOrg[] = [
     nameEn: "Local Traders' Association",
     nameMl: 'നാട്ടിലെ വ്യാപാരി സംഘടന',
     type: 'merchant_assoc',
+    localityKey: 'kl-mpm-nilambur-edakkara',
+  },
+  /**
+   * PLACEHOLDER NAME, like the association above. A college is the second
+   * kind of verifier the launch plan names: it confirms that a graduate on
+   * Koode is its graduate. The real institution's name goes in before launch.
+   */
+  {
+    nameEn: 'Edakkara Arts & Science College',
+    nameMl: 'എടക്കര ആർട്സ് & സയൻസ് കോളേജ്',
+    type: 'college',
     localityKey: 'kl-mpm-nilambur-edakkara',
   },
 ];

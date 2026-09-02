@@ -1,3 +1,4 @@
+import type { AccountType } from '@/server/domain/constants';
 import { prisma } from '@/server/db/client';
 import { env } from '@/server/env';
 import {
@@ -220,6 +221,7 @@ export async function registerWithPassword(
     password: string;
     displayName: string;
     localityId: bigint | null;
+    accountType?: AccountType | undefined;
     locale: string;
     consentVersion: string;
   },
@@ -242,6 +244,7 @@ export async function registerWithPassword(
           passwordHash,
           displayName: input.displayName.trim(),
           localityId: input.localityId,
+          accountType: input.accountType ?? 'seeker',
           status: 'active',
           claimedAt: new Date(),
         },

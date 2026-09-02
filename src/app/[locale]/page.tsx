@@ -78,11 +78,14 @@ export default async function HomePage({ params }: PageProps) {
       searchRequirements({ includeNearby: false, limit: 6, locale }),
     ]);
 
-  const steps = [
-    { title: t('step1Title'), body: t('step1Body') },
-    { title: t('step2Title'), body: t('step2Body') },
-    { title: t('step3Title'), body: t('step3Body') },
-  ];
+  // The launch plan's onboarding, step for step: register, add a profile or
+  // an opening, get verified, get matched, apply with one tap, talk directly,
+  // interview and hire. Each of these is a real screen in the product now,
+  // which is the only reason it is safe to promise it on the front page.
+  const steps = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
+    title: t(`flow${n}Title` as 'flow1Title'),
+    body: t(`flow${n}Body` as 'flow1Body'),
+  }));
 
   const stats = [
     { label: t('statOpenings'), value: counts.openRequirements },
@@ -407,15 +410,17 @@ export default async function HomePage({ params }: PageProps) {
         <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
           {t('howItWorksTitle')}
         </h2>
+        <p className="mt-1 max-w-2xl text-navy-100" data-reveal="lift">
+          {t('howItWorksBody')}
+        </p>
 
         {/*
-          The signature moment: scrolling here draws the graph — two people,
-          the link between them, then the tick that makes it a vouch. It is
-          the product's one sentence, animated, and it sits beside the steps
-          that explain it rather than floating on its own.
+          Seven steps, numbered, because this genuinely is a sequence: each
+          step needs the one before it. The graph beside them is what the
+          verification and vouching steps build up over time.
         */}
-        <div className="mt-4 grid items-center gap-6 lg:grid-cols-[1fr_auto]">
-          <ol className="grid gap-3 sm:grid-cols-3">
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_auto]">
+          <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {steps.map((step, index) => (
               <Card
                 key={step.title}

@@ -43,7 +43,10 @@
     "signOut": "Sign out",
     "admin": "Admin",
     "menu": "Menu",
-    "about": "About"
+    "about": "About",
+    "applications": "My applications",
+    "postings": "My postings",
+    "dashboard": "Dashboard"
   },
   "home": {
     "heroTitle": "Work found through people you know",
@@ -51,12 +54,6 @@
     "findWork": "Find work",
     "postWork": "Post an opening",
     "howItWorksTitle": "How Koode works",
-    "step1Title": "Somebody vouches for you",
-    "step1Body": "A member of the association writes down who you are and how they know your work. Their name stays on it.",
-    "step2Title": "You confirm it is you",
-    "step2Body": "We send you a message. Your profile stays hidden until you accept it. You can refuse, and nothing is shown.",
-    "step3Title": "Employers can find you",
-    "step3Body": "When a shop or firm nearby needs someone, they can see who vouched for you and what they said.",
     "statOpenings": "Open requirements",
     "statPeople": "People on Koode",
     "statRecommendations": "Recommendations recorded",
@@ -89,7 +86,22 @@
     "ctaSeekerTitle": "Looking for work",
     "ctaSeekerBody": "Browse every opening near you. No account needed.",
     "ctaEmployerTitle": "Hiring someone",
-    "ctaEmployerBody": "Post an opening in a minute with an e-mail or Google."
+    "ctaEmployerBody": "Post an opening in a minute with an e-mail or Google.",
+    "howItWorksBody": "From a first visit to a first day at work, in seven steps.",
+    "flow1Title": "Register",
+    "flow1Body": "As someone looking for work, or as an employer. E-mail or Google, one minute.",
+    "flow2Title": "Profile, or opening",
+    "flow2Body": "Seekers add what they can do and what they studied. Employers post what they need.",
+    "flow3Title": "Verification",
+    "flow3Body": "A college, training centre or community body confirms a profile. Verified profiles carry a badge.",
+    "flow4Title": "Matching",
+    "flow4Body": "Openings are matched to a profile by kind of work and place. Employers see which candidates fit.",
+    "flow5Title": "One-tap application",
+    "flow5Body": "Interested? One tap. No cover letter, no form.",
+    "flow6Title": "Direct contact",
+    "flow6Body": "Shortlist a candidate and their contact details are shown. Every reveal is recorded.",
+    "flow7Title": "Interview and hiring",
+    "flow7Body": "Meet, hire, and record who did the work — so good work is remembered."
   },
   "auth": {
     "signInTitle": "Sign in to Koode",
@@ -117,7 +129,7 @@
     "googleNotLinked": "That Google account could not be used. Try again, or create an account with your e-mail.",
     "googleFailed": "Google sign-in did not complete. Please try again, or use your e-mail and password.",
     "accountSuspendedNotice": "This account has been suspended.",
-    "signInEmailSubtitle": "Only employers posting work need an account. Looking for work? Just browse.",
+    "signInEmailSubtitle": "Browse and reveal contacts without an account. Sign in to apply, to keep a profile people can vouch for, or to post work.",
     "emailLabel": "E-mail",
     "passwordLabel": "Password",
     "passwordHelp": "At least 8 characters.",
@@ -126,7 +138,13 @@
     "createAccount": "Create account",
     "noAccountYet": "New here?",
     "haveAccount": "Already have an account?",
-    "googleCompleteSubtitle": "Signing up with Google as {email}. One more step."
+    "googleCompleteSubtitle": "Signing up with Google as {email}. One more step.",
+    "roleLegend": "What brings you here?",
+    "roleSeeker": "Looking for work",
+    "roleSeekerHint": "Make a profile people can vouch for, and apply with one tap.",
+    "roleEmployer": "Hiring, or run a business",
+    "roleEmployerHint": "Post an opening and see who is interested.",
+    "signInToContinue": "Sign in to continue"
   },
   "consent": {
     "title": "Before you continue",
@@ -199,11 +217,12 @@
     "scopeLocal": "My area",
     "fieldContactPhone": "Contact number for candidates",
     "fieldContactPhoneHelp": "Shown only when a candidate deliberately asks for it. Saved to your account — you will not be asked again.",
-    "signInToApply": "Sign in to express interest",
+    "signInToApply": "Sign in or create a profile to apply",
     "fieldContactEmail": "Contact e-mail for candidates",
     "fieldContactEmailHelp": "Shown only when a candidate deliberately asks. Kept separate from your sign-in address, so you can point candidates somewhere else.",
     "searchLabel": "Search openings",
-    "searchPlaceholder": "Job, role or keyword"
+    "searchPlaceholder": "Job, role or keyword",
+    "applyAs": "Create a profile and apply"
   },
   "profile": {
     "title": "Profile",
@@ -241,7 +260,11 @@
     "unlinkGoogle": "Remove Google",
     "unlinkGoogleConfirm": "Google will no longer sign you in. Your e-mail and password keep working.",
     "googleLinked": "Google sign-in attached.",
-    "googleTaken": "That Google account is already attached to a different Koode profile."
+    "googleTaken": "That Google account is already attached to a different Koode profile.",
+    "educationLabel": "Highest qualification",
+    "vouchAction": "Vouch for this person",
+    "vouchHint": "You know their work? Put your name to it.",
+    "shareLink": "Share this profile"
   },
   "recommendations": {
     "title": "Recommend someone",
@@ -266,7 +289,9 @@
     "notVerifiedError": "Only verified members can write recommendations.",
     "pendingInvite": "We have sent {name} a message asking them to confirm. Nothing is shown publicly until they do.",
     "countLabel": "{count, plural, =0 {No recommendations} one {# recommendation} other {# recommendations}}",
-    "nonUsersDisabledNotice": "Right now you can only recommend someone who is already on Koode. Recommending a person who has not signed up is switched off until we can send them a message asking their permission."
+    "nonUsersDisabledNotice": "Right now you can only recommend someone who is already on Koode. Recommending a person who has not signed up is switched off until we can send them a message asking their permission.",
+    "forPerson": "Recommending {name}",
+    "forPersonHint": "Your name will appear with what you write, on their profile."
   },
   "claim": {
     "title": "Someone has recommended you",
@@ -296,11 +321,17 @@
     "withdraw": "Withdraw my interest",
     "myInterests": "Work I am interested in",
     "myInterestsEmpty": "You have not expressed interest in any work yet.",
-    "expressed": "Interested",
+    "expressed": "Applied",
     "candidateCount": "{count, plural, =0 {Nobody yet} one {# person} other {# people}}",
     "noteLabel": "What they said",
     "expressedOn": "Interested on {date}",
-    "viewProfile": "See full profile"
+    "viewProfile": "See full profile",
+    "skillsMatch": "Skills match",
+    "skillsMatchHint": "Their profile lists this kind of work.",
+    "revealContact": "Show contact details",
+    "contactShown": "Contact details",
+    "contactNote": "Shown because you shortlisted them. They are told it was shown.",
+    "shortlistToContact": "Shortlist to see contact details."
   },
   "engagement": {
     "title": "Record what happened",
@@ -334,7 +365,20 @@
     "noOrgs": "You are not an office-bearer of any organisation.",
     "noMembers": "No membership requests for this organisation.",
     "requestedOn": "Asked on {date}",
-    "verifiedByOn": "Verified by {name}"
+    "verifiedByOn": "Verified by {name}",
+    "requestFromInstitution": "Request verification",
+    "pickOrg": "Who can confirm your profile?",
+    "pickOrgHelp": "Choose an institution or body you belong to. An office-bearer there will confirm you.",
+    "refHelp": "Register number, roll number or membership number, if you have one.",
+    "requested": "Request sent. You will see a badge once it is confirmed.",
+    "orgTypeCollege": "College",
+    "orgTypeTrainingCentre": "Training centre",
+    "orgTypeCommunityOrg": "Community organisation",
+    "orgTypeMerchantAssoc": "Traders' association",
+    "orgTypeCivicClub": "Civic club",
+    "orgTypeSwayamsahaya": "Self-help group",
+    "orgTypeResidentsAssoc": "Residents' association",
+    "membersHelp": "People who asked you to confirm they belong here. Verify only someone you can identify."
   },
   "admin": {
     "title": "Admin",
@@ -496,5 +540,50 @@
     "ecosystemBody": "Every recommendation on Koode carries a real name, and every person raised up strengthens the next. That is the point: not a listings board, but a community ecosystem that belongs to the people using it.",
     "ctaSeeker": "Find work",
     "ctaEmployer": "Post an opening"
+  },
+  "onboarding": {
+    "title": "Set up your profile",
+    "subtitle": "Two minutes now, and employers nearby can find you. Everything here can be changed later.",
+    "employerTitle": "Ready to post",
+    "employerSubtitle": "Your account is ready. Post your first opening, or set up your profile first.",
+    "headlineLabel": "One line about your work",
+    "headlinePlaceholder": "e.g. B.Com graduate, tally and GST filing",
+    "educationLabel": "Highest qualification",
+    "educationPlaceholder": "e.g. B.Com 2024, MES College Mampad",
+    "educationHelp": "In your own words. A college or institution you belong to can confirm it.",
+    "skillsHint": "Add the kinds of work you can do. Employers search by these.",
+    "save": "Save and continue",
+    "skip": "Skip for now",
+    "postFirst": "Post an opening",
+    "done": "Profile saved."
+  },
+  "dashboard": {
+    "seekerTitle": "Your work",
+    "employerTitle": "Your hiring",
+    "profileStrength": "Profile completeness",
+    "complete": "Complete",
+    "missing": "Add: {items}",
+    "itemHeadline": "a headline",
+    "itemEducation": "your qualification",
+    "itemSkills": "a work type",
+    "itemLocality": "your place",
+    "matchesTitle": "Openings for you",
+    "matchesBody": "Matched to the work types and place on your profile.",
+    "matchesEmpty": "Nothing matches yet. Add work types to your profile, or browse everything.",
+    "applicationsTitle": "Your applications",
+    "applicationsEmpty": "You have not applied to anything yet.",
+    "verificationTitle": "Verification",
+    "verificationBody": "Ask your college, training centre or a community body you belong to, to confirm your profile. Verified profiles carry a badge employers can check.",
+    "verificationPending": "Waiting for {org} to confirm.",
+    "verificationVerified": "Verified by {org}.",
+    "postingsTitle": "Your postings",
+    "postingsEmpty": "You have not posted anything yet.",
+    "candidates": "{count, plural, =0 {No candidates} one {# candidate} other {# candidates}}",
+    "vouchTitle": "Vouches for you",
+    "vouchBody": "Ask someone who knows your work to vouch for you. Share your profile link.",
+    "copyLink": "Copy profile link",
+    "copied": "Copied.",
+    "editProfile": "Edit profile",
+    "viewProfile": "View public profile"
   }
 }

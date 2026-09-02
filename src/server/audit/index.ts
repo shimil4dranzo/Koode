@@ -45,6 +45,7 @@ export const AUDIT_ACTIONS = {
   REQUIREMENT_FILLED: 'requirement.filled',
   REQUIREMENT_EXPIRED: 'requirement.expired',
   CONTACT_REVEALED: 'contact.revealed',
+  CANDIDATE_CONTACT_REVEALED: 'candidate_contact.revealed',
   INTEREST_EXPRESSED: 'interest.expressed',
   INTEREST_UPDATED: 'interest.updated',
   ENGAGEMENT_RECORDED: 'engagement.recorded',

@@ -202,6 +202,8 @@ export function assertValidClaims(
 // ---------------------------------------------------------------------------
 
 export const GOOGLE_SIGNUP_COOKIE = 'koode_gsignup';
+/** Role + next path, carried across the OAuth round trip. See start/route.ts. */
+export const GOOGLE_INTENT_COOKIE = 'koode_google_intent';
 const SIGNUP_TTL_MS = 15 * 60 * 1000;
 
 /**

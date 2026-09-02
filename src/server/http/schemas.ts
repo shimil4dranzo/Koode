@@ -12,6 +12,7 @@ import {
   REPORTABLE_ENTITIES,
   REPORT_REASONS,
   REPORT_STATUSES,
+  ACCOUNT_TYPES,
 } from '@/server/domain/constants';
 
 /**
@@ -80,6 +81,9 @@ export const registerSchema = z.object({
   password: passwordSchema,
   displayName: displayNameSchema,
   localityPublicId: publicIdSchema.optional(),
+  // Optional and defaulted server-side, so an older client that never sends
+  // it still registers rather than failing validation.
+  accountType: z.enum(ACCOUNT_TYPES).optional(),
   locale: localeSchema,
   consentVersion: z.string().min(1),
 });
@@ -93,6 +97,7 @@ export const loginSchema = z.object({
 export const registerGoogleSchema = z.object({
   displayName: displayNameSchema,
   localityPublicId: publicIdSchema.optional(),
+  accountType: z.enum(ACCOUNT_TYPES).optional(),
   locale: localeSchema,
   consentVersion: z.string().min(1),
 });
@@ -106,6 +111,8 @@ export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   localityPublicId: publicIdSchema.nullish(),
   headline: z.string().trim().max(200).nullish(),
+  education: z.string().trim().max(200).nullish(),
+  accountType: z.enum(ACCOUNT_TYPES).optional(),
 });
 
 export const personSkillSchema = z.object({

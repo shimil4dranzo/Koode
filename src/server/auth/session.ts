@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { prisma } from '@/server/db/client';
 import { generateToken, hashIp, hashToken } from '@/server/crypto';
 import { env } from '@/server/env';
-import type { PlatformRole, PersonStatus } from '@/server/domain/constants';
+import type { AccountType, PlatformRole, PersonStatus } from '@/server/domain/constants';
 import { errors } from '@/server/errors';
 
 /**
@@ -37,6 +37,8 @@ export type CurrentPerson = {
   displayName: string;
   status: PersonStatus;
   platformRole: PlatformRole;
+  /** seeker | employer — what the dashboard leads with. Not a permission. */
+  accountType: AccountType;
   localityId: bigint | null;
   hasVerifiedMembership: boolean;
   /**
@@ -95,6 +97,7 @@ export const getCurrentPerson = cache(async (): Promise<CurrentPerson | null> =>
           displayName: true,
           status: true,
           platformRole: true,
+          accountType: true,
           localityId: true,
           anonymizedAt: true,
           phone: true,
@@ -133,6 +136,7 @@ export const getCurrentPerson = cache(async (): Promise<CurrentPerson | null> =>
     displayName: person.displayName,
     status: person.status as PersonStatus,
     platformRole: person.platformRole as PlatformRole,
+    accountType: person.accountType as AccountType,
     localityId: person.localityId,
     hasVerifiedMembership: person.anchorMemberships.length > 0,
     hasContactPhone: person.phone !== null,

@@ -207,6 +207,20 @@ model Person {
   /// Free-text, optional. No resume upload in Stage 1.
   headline String? @db.VarChar(200)
 
+  /// Highest qualification, in the person's own words ("B.Com 2024, MES
+  /// College", "ITI Electrician"). One line, optional, no verification: an
+  /// institution that verifies the person vouches for it. See ACCOUNT_TYPES
+  /// for why this is a plain string and not a structured education table —
+  /// Stage 1 has no résumé, and a table nobody fills is worse than a line
+  /// people do.
+  education String? @db.VarChar(200)
+
+  /// One of ACCOUNT_TYPES (seeker|employer). Chosen at sign-up; a default for
+  /// what the person sees first, never a permission. Persons that predate
+  /// this column are `seeker`, which is the safe reading: it offers the
+  /// profile, and posting stays one tap away.
+  accountType String @default("seeker") @map("account_type") @db.VarChar(20)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -338,14 +352,16 @@ model OtpChallenge {
 // ===========================================================================
 
 /// A local institution whose word means something: the merchants' association,
-/// a civic club, a residents' association. Seeded with KVVES Edakkara.
+/// a civic club, a residents' association — and, for job seekers, a college or
+/// training centre that can confirm a person is who their profile says.
 model AnchorOrg {
   id       BigInt @id @default(autoincrement())
   publicId String @unique @map("public_id") @db.VarChar(30)
 
   nameEn String  @map("name_en") @db.VarChar(160)
   nameMl String? @map("name_ml") @db.VarChar(160)
-  /// One of ANCHOR_ORG_TYPES (merchant_assoc|civic_club|swayamsahaya|residents_assoc).
+  /// One of ANCHOR_ORG_TYPES: merchant_assoc|civic_club|swayamsahaya|residents_assoc,
+  /// or an institution that verifies seekers — college|training_centre|community_org.
   type   String  @db.VarChar(30)
 
   localityId BigInt @map("locality_id")

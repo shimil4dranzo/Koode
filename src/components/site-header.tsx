@@ -47,7 +47,14 @@ export async function SiteHeader() {
           <NavLink href="/about">{tNav('about')}</NavLink>
 
           {person ? (
-            <NavLink href="/profile">{tNav('profile')}</NavLink>
+            <>
+              {/* An employer's most frequent action gets its own item; a
+                  seeker's lives on the dashboard, which is one tap anyway. */}
+              {person.accountType === 'employer' ? (
+                <NavLink href="/openings/new">{tNav('postWork')}</NavLink>
+              ) : null}
+              <NavLink href="/profile">{tNav('dashboard')}</NavLink>
+            </>
           ) : (
             <NavLink href="/sign-in" emphasis>
               {tNav('signIn')}
