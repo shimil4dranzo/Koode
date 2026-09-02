@@ -162,7 +162,7 @@ const PAIRS: Pair[] = [
   { fg: 'navy-900', bg: 'paper-raised', where: 'wordmark on a card', kind: 'text' },
   { fg: 'white', bg: 'navy-900', where: 'inverse wordmark / dark band', kind: 'text' },
   { fg: 'navy-100', bg: 'navy-900', where: 'secondary text on a navy band', kind: 'text' },
-  { fg: 'brand-600', bg: 'navy-900', where: 'the smile on a dark ground', kind: 'ui' },
+  { fg: 'brand-500', bg: 'navy-900', where: 'the smile on a dark ground', kind: 'ui' },
 
   { fg: 'white', bg: 'navy-800', where: 'step title on the navy band', kind: 'text' },
   { fg: 'navy-100', bg: 'navy-800', where: 'step body on the navy band', kind: 'text' },

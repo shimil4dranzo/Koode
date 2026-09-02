@@ -20,7 +20,7 @@ import { cn } from '@/lib/cn';
  */
 
 /** Geometry shared by the wordmark and the compact mark. */
-const SMILE_PATH = 'M56 78 Q101 99 146 78';
+const SMILE_PATH = 'M56 77 Q101 95 146 77';
 
 export function LogoWordmark({
   className,
@@ -69,8 +69,15 @@ export function LogoWordmark({
       */}
       <path d="M222 44H258A18 18 0 1 0 252.7 56.7" />
 
-      {/* The smile. Green in both tones: it is the recognisable part. */}
-      <path d={SMILE_PATH} className="text-brand-600" stroke="currentColor" strokeWidth={10} />
+      {/* The smile. Green in both tones, because it is the part people
+          recognise — but a step brighter on dark ground, where the darker
+          green used on paper sinks into the navy. */}
+      <path
+        d={SMILE_PATH}
+        className={tone === 'inverse' ? 'text-brand-500' : 'text-brand-600'}
+        stroke="currentColor"
+        strokeWidth={10}
+      />
     </svg>
   );
 }
@@ -87,12 +94,11 @@ export function SmileGlyph({ className }: { className?: string }) {
     <svg
       viewBox="46 66 110 40"
       aria-hidden="true"
-      className={cn('shrink-0', className)}
+      className={cn('h-auto shrink-0', className)}
       fill="none"
       stroke="currentColor"
       strokeWidth={16}
       strokeLinecap="round"
-      preserveAspectRatio="none"
     >
       <path d={SMILE_PATH} />
     </svg>

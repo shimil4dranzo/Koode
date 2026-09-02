@@ -53,10 +53,11 @@ export default async function HomePage({ params }: PageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [t, tCommon, tAnchor, tEngagement, counts, tiers, vouches, latest] =
+  const [t, tCommon, tApp, tAnchor, tEngagement, counts, tiers, vouches, latest] =
     await Promise.all([
       getTranslations('home'),
       getTranslations('common'),
+      getTranslations('app'),
       getTranslations('anchor'),
       getTranslations('taxonomy.engagementType'),
       getPlatformCounts(),
@@ -104,16 +105,27 @@ export default async function HomePage({ params }: PageProps) {
           <div data-reveal="lift">
             <p className="flex items-center gap-2 text-base font-medium text-ink-700">
               {t('heroKicker')}
-              <SmileGlyph className="h-3 w-6 text-brand-600" />
+              <SmileGlyph className="w-7 text-brand-600" />
             </p>
 
-            {/* "Meet" then the mark itself, rather than the name set in type:
-                the wordmark is the asset, and using it here is what makes the
-                header, the banner and the installed icon read as one thing. */}
-            <p className="mt-3 text-4xl font-semibold uppercase tracking-tight text-navy-900 sm:text-5xl">
-              {t('heroMeet')}
-            </p>
-            <LogoWordmark className="mt-2 w-56 sm:w-72" />
+            {/*
+              Set in type, not with the logo.
+
+              The first version dropped the wordmark in here as the second line
+              of the headline. That is a misuse of a logo: a mark asserts
+              identity, and it does that by appearing in one consistent form in
+              a few reserved places — the header, the footer, the app frame. As
+              soon as it is scaled to headline size and joined to a word, it is
+              being read as typography, and the thing that made it recognisable
+              everywhere else is diluted.
+
+              So the banner says the name in the page's own display face, and
+              the mark itself keeps its own places, where it stands alone.
+            */}
+            <h1 className="mt-3 text-5xl font-semibold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+              <span className="block text-navy-900">{t('heroMeet')}</span>
+              <span className="block text-brand-700">{tApp('name')}</span>
+            </h1>
 
             <p className="mt-5 max-w-lg text-lg text-ink-700">{t('heroBody')}</p>
 
@@ -237,10 +249,16 @@ export default async function HomePage({ params }: PageProps) {
           })}
         </ul>
 
-        {/* The promise, said plainly. */}
-        <p className="mt-8 inline-flex items-center gap-3 rounded-full bg-navy-900 px-5 py-3 text-base font-medium text-white">
-          <SmileGlyph className="h-3 w-6 text-brand-500" />
-          {t('heroTagline')}
+        {/*
+          The promise, said plainly, signed with the mark.
+
+          The bare smile was here first and did not read as a logo — on its own
+          at this size it is a green dash. The wordmark is the thing people are
+          meant to recognise, so the pill carries it.
+        */}
+        <p className="mt-8 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-full bg-navy-900 px-6 py-3.5 text-base font-medium text-white">
+          <LogoWordmark tone="inverse" className="w-20" />
+          <span>{t('heroTagline')}</span>
         </p>
       </section>
 

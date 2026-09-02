@@ -47,12 +47,19 @@ export function ScrollReveal() {
       }
     });
 
+    /** Everything not yet shown. Shrinks to empty, and drives the cleanup. */
+    const pending = new Set<HTMLElement>(targets);
+
+    const reveal = (element: HTMLElement) => {
+      element.dataset.revealState = 'in';
+      pending.delete(element);
+      observer.unobserve(element);
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          (entry.target as HTMLElement).dataset.revealState = 'in';
-          observer.unobserve(entry.target);
+          if (entry.isIntersecting) reveal(entry.target as HTMLElement);
         }
       },
       {
@@ -63,9 +70,50 @@ export function ScrollReveal() {
       },
     );
 
-    targets.forEach((element) => observer.observe(element));
+    /**
+     * Show anything the viewport has already passed.
+     *
+     * An IntersectionObserver reports threshold *crossings*, and when the page
+     * jumps — scroll restoration on a back-navigation, a link to an anchor, a
+     * hard flick on a phone — an element can go from below the viewport to
+     * above it inside one frame. No threshold is ever crossed, no callback
+     * arrives, and the element stays at opacity 0 for the life of the page.
+     * Measured on this page: a single jump to the bottom left 19 of 28
+     * elements permanently invisible, including every job listing.
+     *
+     * So the observer drives the animation, and this drives the guarantee.
+     * Animation is decoration; the listings are the product, and when the two
+     * disagree the content wins.
+     */
+    const sweep = () => {
+      for (const element of pending) {
+        if (element.getBoundingClientRect().bottom <= 0) reveal(element);
+      }
+      if (pending.size === 0) stopSweeping();
+    };
+
+    // Coalesced into one frame, so a fast scroll cannot queue up work, and
+    // detached entirely once everything has been shown — this costs nothing
+    // for the rest of the page's life.
+    let frame = 0;
+    const onScroll = () => {
+      if (frame !== 0) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        sweep();
+      });
+    };
+    const stopSweeping = () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // The same case at load time: the browser may restore scroll before this
+    // runs, so anything already above the fold is shown rather than observed.
+    sweep();
+    pending.forEach((element) => observer.observe(element));
 
     return () => {
+      if (frame !== 0) cancelAnimationFrame(frame);
+      stopSweeping();
       observer.disconnect();
       root.removeAttribute('data-reveal-ready');
     };
