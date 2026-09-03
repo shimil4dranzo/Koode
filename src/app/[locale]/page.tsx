@@ -397,66 +397,78 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* ---- How it works: three columns instead of a tower ----------------
+      {/* ---- How it works: one line, seven steps -------------------------
 
-        Navy, and the only dark band left on the page. The graph is drawn with
-        additive blending, which needs a dark ground to glow on — it used to
-        get that from the hero, and when the hero went light this section is
-        where it belongs anyway: beside the three steps that explain what the
-        graph is showing, rather than behind a headline as decoration.
+        A horizontal stepper, because these seven are a sequence and a
+        sequence reads as a line. The earlier 3-column grid left a dead hole
+        (seven cards is 3+3+1) and squeezed the graph into a corner. Now the
+        steps span the full width on a wide screen — one row, a connector
+        through the numbers — and wrap to a readable grid below xl; the graph
+        moves behind the whole band as ambient depth rather than a cramped
+        square nobody could see.
+
+        Still the only dark band on the page: the WebGL graph is additively
+        blended and needs a dark ground to glow on.
       */}
-      <section className="border-y border-navy-800 bg-navy-900 text-white">
-        <div className="mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
-        <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
-          {t('howItWorksTitle')}
-        </h2>
-        <p className="mt-1 max-w-2xl text-navy-100" data-reveal="lift">
-          {t('howItWorksBody')}
-        </p>
-
+      <section className="relative isolate overflow-hidden border-y border-navy-800 bg-navy-900 text-white">
         {/*
-          Seven steps, numbered, because this genuinely is a sequence: each
-          step needs the one before it. The graph beside them is what the
-          verification and vouching steps build up over time.
+          The graph, now a backdrop. A near-opaque scrim sits over it so every
+          number and line below reads against navy, not against a moving field
+          — the glow shows through the gaps, the text never fights it. Fed by
+          the real counts exactly as before.
         */}
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_auto]">
-          <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {steps.map((step, index) => (
-              <Card
-                key={step.title}
-                as="li"
-                data-reveal="card"
-                style={{ '--reveal-delay': `${index * 90}ms` } as StyleWithVars}
-                tone="inverse"
-                className="flex h-full gap-4"
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-500 font-semibold text-navy-900"
-                >
-                  {index + 1}
-                </span>
-                <div>
-                  <h3 className="font-medium text-white">{step.title}</h3>
-                  <p className="mt-1 text-navy-100">{step.body}</p>
-                </div>
-              </Card>
-            ))}
-          </ol>
-
-          {/*
-            The graph, fed by the real numbers: as many nodes as there are
-            people and as many edges as there are recommendations. On a
-            capable device this is WebGL and it turns as you scroll; on
-            anything else the same drawing renders as SVG. Either way the
-            section is complete.
-          */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <VouchGraph3d
             peopleCount={counts.activePeople}
             vouchCount={counts.recommendations}
-            className="mx-auto w-64 shrink-0 text-brand-600 lg:w-80"
+            className="absolute right-0 top-1/2 w-[42rem] max-w-[80%] -translate-y-1/2 text-brand-600"
+            fallbackClassName="absolute right-0 top-1/2 w-[42rem] max-w-[80%] -translate-y-1/2 text-brand-600"
           />
+          <div className="absolute inset-0 bg-navy-900/80" />
         </div>
+
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-10 lg:py-14">
+          <h2 className="text-xl font-semibold sm:text-2xl" data-reveal="lift">
+            {t('howItWorksTitle')}
+          </h2>
+          <p className="mt-1 max-w-2xl text-navy-100" data-reveal="lift">
+            {t('howItWorksBody')}
+          </p>
+
+          <ol className="mt-8 grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-4 xl:grid-cols-7">
+            {steps.map((step, index) => (
+              <li
+                key={step.title}
+                className="relative"
+                data-reveal="card"
+                style={{ '--reveal-delay': `${index * 70}ms` } as StyleWithVars}
+              >
+                {/*
+                  The connector. Only drawn at xl, where all seven sit in one
+                  row, so it is a continuous timeline through the numbers; on
+                  the last step there is nothing to its right, so it is not
+                  drawn. Below xl the grid wraps and a line would point at the
+                  wrong neighbour, so there is none — the numbers carry the
+                  order on their own.
+                */}
+                {index < steps.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-9 right-[-1.25rem] top-4 hidden h-px bg-white/20 xl:block"
+                  />
+                ) : null}
+
+                <span
+                  aria-hidden="true"
+                  className="relative flex size-8 items-center justify-center rounded-full bg-brand-500 font-semibold text-navy-900"
+                >
+                  {index + 1}
+                </span>
+                <h3 className="mt-3 font-medium text-white">{step.title}</h3>
+                <p className="mt-1 text-sm text-navy-100">{step.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
