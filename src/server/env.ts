@@ -92,10 +92,17 @@ function load(): Env {
           'per-process and provides no protection behind more than one instance.',
       );
     }
-    if (env.SMS_PROVIDER === 'console') {
+    // The console SMS stub only matters when something actually sends an SMS,
+    // and the one capability that does — the third-party claim flow — is off
+    // unless ALLOW_RECOMMENDING_NON_USERS is set. Email/Google sign-in and
+    // everything the launch uses send no SMS. So this refuses to boot only
+    // when the claim flow is enabled without a real provider behind it, rather
+    // than blocking every production boot on a provider the launch never uses.
+    if (env.SMS_PROVIDER === 'console' && env.ALLOW_RECOMMENDING_NON_USERS) {
       throw new Error(
-        'SMS_PROVIDER=console cannot be used in production: one-time passwords ' +
-          'would be written to the server log instead of being delivered.',
+        'ALLOW_RECOMMENDING_NON_USERS is on but SMS_PROVIDER=console: claim ' +
+          'invitations would be written to the server log, not delivered. Set a ' +
+          'real SMS provider or turn the claim flow off.',
       );
     }
     if (env.NEXT_PUBLIC_APP_URL.startsWith('http://')) {
